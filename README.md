@@ -10,7 +10,7 @@ run the hello app development environment like this:
 docker-compose up --build
 ```
 
-Load the app at http://localhost:3000 to see "Hello from DB", and edit `web/src/App.js` to see live changes.
+Load the web app at http://localhost:3000 to see "Hello from DB", and edit `web/src/App.js` to see live changes.
 
 Load the API at http://localhost:4000/api/hello and expect `{"message": "Hello from DB"}`.
 
