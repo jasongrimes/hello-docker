@@ -18,21 +18,20 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 
 ## Basic architecture
 
-A simple "hello" application having a JavaScript frontend, a NodeJS API backend, and a database.
+This is a simple "hello" application with a JavaScript frontend, a NodeJS API backend, and a database.
 
-The three basic services are broken into separate Docker containers:
+These three basic services are broken into three separate Docker containers:
 
-- `web`: The JavaScript frontend (React, in this example), served by Nginx. Nginx also reverse proxies for the Node JS server in the `api` container over a private network. (In production, only the `web` container needs to be publicly accessible on the internet.)
 - `api`: The REST API, served by Node JS. (Express, in this example.)
 - `db`: A database. (Postgres, in this example.)
+- `web`: The JavaScript frontend (React, in this example), served by Nginx. Nginx also reverse proxies for the Node JS server in the `api` container over a private network. In production, only the `web` container needs to be publicly accessible on the internet.
 
-In development environments, the three Docker containers run on a single host workstation with `docker-compose`.
+In development environments, use `docker-compose` to run all the containers on the one development host.
 In production and testing environments,
 the containers can all run on a single EC2 instance initially.
-Resource monitoring will indicate what needs to scale and when.
+Resource monitoring can indicate what needs to scale and when.
 
-To scale the app, the database can be moved into separate EC2 instances or a managed service,
-and multiple api and web containers can be run on different EC2 instances, in different regions. Cloudflare can be used for (free) load balancing across web containers with round-robin DNS, and also for caching, DDoS protection and other security measures.
+To scale the app later, the database can be moved into separate EC2 instances or a managed service; multiple api and web containers can be run on different EC2 instances, in different regions; and Cloudflare can be used for (free) load balancing across web containers with round-robin DNS, plus caching, DDoS protection and other security measures.
 
 **File organization:**
 
@@ -40,6 +39,8 @@ and multiple api and web containers can be run on different EC2 instances, in di
   - `Dockerfile`: Docker config for Node JS container
   - `index.js`: Node server for REST API (in Express.js)
   - `package.json`: NPM packages for backend app
+- `db/`:
+  - `initdb.d/`: DB config scripts executed when the db container volume is first created.
 - `web/`: The web server and React frontend
   - `nginx/`:
     - `nginx.conf`: Config for Nginx web server and reverse proxy.
@@ -49,7 +50,7 @@ and multiple api and web containers can be run on different EC2 instances, in di
   - `package.json`: NPM packages for frontend app
 - `docker-compose.yml`: Orchestrate Docker containers in dev environments.
 
-## Creating hello app
+## Creating a hello app
 
 How this app was created.
 
@@ -67,12 +68,12 @@ mkdir hello-docker && cd $_
 
 ### Create the frontend React app
 
-Open a terminal for your web service (`` ctl-` `` in vscode).
-
 Create a skeleton React app in a new `web/` subdirectory:
 
+Open a terminal for the web service (`` ctl-` `` in vscode).
+
 ```sh
-# In the project root directory:
+# In the web terminal, in the project root directory:
 npx create-react-app web
 ```
 
@@ -114,8 +115,8 @@ export default App;
 Test the React app:
 
 ```sh
-# From the project root directory:
-cd web/
+# In the web terminal, from the project root directory:
+cd web
 npm start
 ```
 
@@ -127,8 +128,10 @@ Press `ctl-C` to stop the server.
 
 Create a skeleton Node JS app in an `api/` subdirectory.
 
+Open a terminal for the api service (`` ctl-shift-` `` in vscode)
+
 ```sh
-# From the project root directory:
+# In the api terminal, from the project root directory:
 mkdir api
 cd api
 npm init -y
@@ -137,6 +140,7 @@ npm init -y
 #### Create an API server with Express
 
 ```sh
+# In the api terminal
 npm install express cors nodemon
 ```
 
@@ -161,36 +165,40 @@ app.listen(port, () => {
 });
 ```
 
+Configure an `npm start` command in `api/package.json`:
+
+```.json
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+```
+
 Test the api server.
 
 ```sh
-# From the project root directory:
+# In the api terminal, from the project root directory:
 cd api
-node index.js
+npm start
 ```
 
-Load http://localhost:4000/api/hello and expect this response:
+Load http://localhost:4000/api/hello and expect `{ "message": "Hello from Express" }`.
 
-```json
-{ "message": "Hello from Express" }
-```
-
-Test the frontend app. Start the server by running this again in the web terminal:
+Test the frontend app. Start the web server:
 
 ```sh
-# From the project root directory:
+# In the web terminal, from the project root directory:
 cd web
 npm start
 ```
 
-Load https://localhost:3000 and expect to see "Hello from Express".
+Load https://localhost:3000 and expect "Hello from Express".
 
 Press `ctl-C` in both terminals to stop the servers.
 
-#### Add a database (Postgres)
+### Add a database (Postgres)
 
 ```sh
-# From the project root directory:
+# In the api terminal, from the project root directory:
 cd api
 npm install pg
 ```
@@ -238,10 +246,132 @@ app.listen(port, () => {
 });
 ```
 
+Start the database. Open a new terminal for the db service (`` ctl-shift-` `` in vscode):
+
+```sh
+# In the db terminal
+docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
+```
+
+Test the api server with the database:
+
+```sh
+# In the api terminal, from the project root directory:
+cd api
+DB_USER=postgres DB_PASSWORD=postgres npm start
+```
+
+Load http://localhost:4000/api/hello and expect `{"message":"Hello from DB"}`.
+
+Test the frontend app with the database:
+
+```sh
+# In the web terminal, from the project root directory:
+cd web
+npm start
+```
+
+Load https://localhost:3000 and expect "Hello from DB".
+
+Press `ctl-C` in all three terminals to shut down the servers.
+
 ## Containerizing the hello app
 
-To simplify the orchestration of the different services,
+To simplify orchestration of the different services,
 put them in Docker containers and run them in development with `docker-compose`.
+
+### Configure docker compose
+
+Create `docker-compose.yml` in the project root directory:
+
+```yaml
+version: "3.8"
+services:
+  api:
+    # build:
+    #   context: "./api"
+    #   target: "base"
+    image: node:20
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: hello
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./api:/app
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hello
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data:delegated
+      # - ./db/initdb.d:/docker-entrypoint-initdb.d/
+
+  web:
+    # build:
+    #   context: "./web"
+    #   target: "base"
+    image: node:20
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: development
+      API_BASEURL: http://localhost:4000
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./web:/app
+
+volumes:
+  postgres-data:
+```
+
+## Running hello app in development
+
+Use `docker-compose` to run the app in development environments.
+It builds and launches base versions of the `web`, `api`, and `db` containers,
+and adds the development node servers and tooling.
+
+Start the hello app containers (building them if necessary) like this:
+
+```sh
+# In the project root directory:
+docker-compose up --build -d
+```
+
+Load http://localhost:3000/ to test the hello world application.
+
+Expect a "Hello" message from React, Express, or the DB, depending on how far things are successfully wired up.
+Check the browser console and the server output for any errors.
+Edit `web/src/App.js` to see live changes.
+
+You can also load the API directly at http://localhost:4000/api/hello and expect the following response if the database is working:
+
+```
+{ message: 'Hello from DB' }
+```
+
+To stop the containers:
+
+```sh
+# In the project root directory:
+docker-compose down
+```
 
 ### Configure the api container
 
@@ -315,96 +445,6 @@ server {
 }
 ```
 
-### Configure docker compose
-
-Create `docker-compose.yml` in the project root directory:
-
-```yaml
-version: "3.8"
-services:
-  api:
-    build:
-      context: "./api"
-      target: "base"
-    command: sh -c "npm install && npx nodemon index.js"
-    depends_on:
-      - db
-    environment:
-      NODE_ENV: development
-      PORT: 4000
-      DB_HOST: db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_DATABASE: hello
-    ports:
-      - "4000:4000"
-    volumes:
-      - ./api:/app
-
-  db:
-    image: postgres
-    restart: always
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=hello
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data:delegated
-      # - ./db/initdb.d:/docker-entrypoint-initdb.d/
-
-  web:
-    build:
-      context: "./web"
-      target: "base"
-    command: sh -c "npm install && npm start"
-    depends_on:
-      - api
-    environment:
-      NODE_ENV: development
-      API_BASEURL: http://localhost:4000
-      PORT: 3000
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./web:/app
-
-volumes:
-  postgres-data:
-```
-
-## Running hello app in development
-
-Use `docker-compose` to run the app in development environments.
-It builds and launches base versions of the `web`, `api`, and `db` containers,
-and adds the development node servers and tooling.
-
-Start the hello app containers (building them if necessary) like this:
-
-```sh
-# In the project root directory:
-docker-compose up --build -d
-```
-
-Load http://localhost:3000/ to test the hello world application.
-
-Expect a "Hello" message from React, Express, or the DB, depending on how far things are successfully wired up.
-Check the browser console and the server output for any errors.
-Edit `web/src/App.js` to see live changes.
-
-You can also load the API directly at http://localhost:4000/api/hello and expect the following response if the database is working:
-
-```
-{ message: 'Hello from DB' }
-```
-
-To stop the containers:
-
-```sh
-# In the project root directory:
-docker-compose down
-```
 
 ## Deploying to production
 
