@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  api:
+    build:
+      context: "./api"
+      target: "base"
+    command: sh -c "npm install && npx nodemon index.js"
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: hello
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./api:/app
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hello
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data:delegated
+      # - ./db/initdb.d:/docker-entrypoint-initdb.d/
+
+  web:
+    build:
+      context: "./web"
+      target: "base"
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: development
+      API_BASEURL: http://api:4000
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./web:/app
+
+volumes:
+  postgres-data:
