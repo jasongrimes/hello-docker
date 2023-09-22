@@ -142,7 +142,7 @@ cd api
 npm init -y
 ```
 
-#### Create an API server with Express
+Create a simple API server with Express.
 
 ```sh
 # In the api terminal, in the api/ directory
@@ -343,19 +343,36 @@ volumes:
   postgres-data:
 ```
 
-Start the containers with `docker-compose up --build`.
+Start the containers with `docker-compose up`.
 
 ## Customizing the container images
+
+The `docker-compose` file above uses the standard official Docker images for `node` and `postgres`.
+
+To prepare images for production deployment,
+or to add custom operating system packages or other dependencies,
+custom images need to be built.
+
+This is done by adding a custom `Dockerfile` for each image,
+and updating `docker-compose.yml` to describe the build context instead of specifying an official image.
 
 ### Customize the api image
 
 Create `api/Dockerfile` with the following contents:
 
 ```Dockerfile
-# base image contains the dependencies and no application code
+# "base" image contains the dependencies and no application code
 FROM node:20 as base
 
-# build image inherits from base and adds application code for production
+# Specify any custom OS packages or other dependencies here.
+# These dependencies will be available in all environments.
+#
+# RUN apt-get update && apt-get install ...
+#
+
+
+# "prod" image inherits from "base", and adds application code for production
+# Dev environments do not include this part--they run a separate startup command defined in docker-compose.yml.
 FROM base as prod
 WORKDIR /app
 COPY package*.json ./
@@ -366,13 +383,40 @@ EXPOSE 4000
 CMD ["node", "index.js"]
 ```
 
+### Customize the db
+
+The `postgres` image supports running custom initialization scripts when the database is first created.
+(This is common in database Docker images.)
+
+Create a `db/initdb.d/` directory, and add one or more *.sql, *.sql.gz, or *.sh files to be run when the database is first created.
+Note that postgres only runs the init scripts **if the postgres data directory is empty**.
+
+To cause the init scripts to be run again, remove the `postgres-data` volume (*which deletes all data*):
+
+```sh
+# In the db terminal, in the project root directory:
+docker compose rm
+docker volume rm hello-docker_postgres-data
+```
+
 ### Customize the web image
 
 Create `web/Dockerfile` with the following contents:
 
 ```Dockerfile
+# "base" image contains the dependencies and no application code
 FROM node:20 as base
 
+# Specify any custom OS packages or other dependencies here.
+# These dependencies will be available in all environments.
+#
+# RUN apt-get update && apt-get install ...
+#
+
+
+# "build" image inherits from "base", and adds application code for production
+# Dev environments do not include this part--they run a separate startup command defined in docker-compose.yml.
+#
 # Stage 1: Build the React application
 FROM base as build
 WORKDIR /app
@@ -417,6 +461,67 @@ server {
 
     # Additional Nginx configuration for SSL, security, etc. can go here if needed
 }
+```
+
+### Update docker-compose.yml to use customized images
+
+```yaml
+version: "3.8"
+services:
+  api:
+    depends_on:
+      - db
+    #image: node:20
+    build:
+      context: "./api"
+      target: "base"
+    volumes:
+      - ./api:/app
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: hello
+    command: sh -c "npm install && npx nodemon index.js"
+    ports:
+      - "4000:4000"
+
+  db:
+    image: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data:delegated
+      - ./db/initdb.d:/docker-entrypoint-initdb.d/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hello
+    ports:
+      - "5432:5432"
+    restart: always
+
+  web:
+    depends_on:
+      - api
+    #image: node:20
+    build:
+      context: "./web"
+      target: "base"
+    volumes:
+      - ./web:/app
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      API_BASEURL: http://api:4000
+      PORT: 3000
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:
 ```
 
 ## Deploying to production
