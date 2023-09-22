@@ -3,7 +3,7 @@
 A "hello" app with Docker containers for a basic web application, including a web container (Nginx and React), an API container (Node and Express), and a database container (Postgres).
 
 After cloning this repository,
-run the hello app like this:
+run the hello app development environment like this:
 
 ```sh
 # In project root directory:
@@ -13,6 +13,8 @@ docker-compose up --build
 Load the app at http://localhost:3000 to see "Hello from DB", and edit `web/src/App.js` to see live changes.
 
 Load the API at http://localhost:4000/api/hello and expect `{"message": "Hello from DB"}`.
+
+Press `ctl-C` in the docker-compose terminal to stop the containers.
 
 ## Basic architecture
 
