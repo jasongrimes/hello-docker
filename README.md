@@ -1,11 +1,13 @@
-# Hello docker: web, api and db
+# Hello Docker: web, api and db
 
-A "hello" app to create Docker containers for a basic web application, consisting of a web container (Nginx and React), an API container (Node and Express), and a database container (Postgres).
+A "hello" app with Docker containers for a basic web application, including a web container (Nginx and React), an API container (Node and Express), and a database container (Postgres).
 
-Run hello app like this, from the project root directory:
+After cloning this repository,
+run the hello app like this:
 
 ```sh
-docker-compose up --build -d
+# In project root directory:
+docker-compose up --build
 ```
 
 Load the app at http://localhost:3000 to see "Hello from DB", and edit `web/src/App.js` to see live changes.
