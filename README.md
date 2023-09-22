@@ -20,7 +20,7 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 
 A simple "hello" application having a JavaScript frontend, a NodeJS API backend, and a database.
 
-Three basic services are broken into three separate Docker containers:
+The three basic services are broken into separate Docker containers:
 
 - `web`: The JavaScript frontend (React, in this example), served by Nginx. Nginx also reverse proxies for the Node JS server in the `api` container over a private network. (In production, only the `web` container needs to be publicly accessible on the internet.)
 - `api`: The REST API, served by Node JS. (Express, in this example.)
@@ -44,7 +44,7 @@ and multiple api and web containers can be run on different EC2 instances, in di
   - `nginx/`:
     - `nginx.conf`: Config for Nginx web server and reverse proxy.
   - `src/`
-    - `App.js`: Basic React component that fetches `/api/hello` and renders the output.
+    - `App.js`: Basic React component that fetches a hello message from the api server and renders the output.
   - `Dockerfile`: Docker config for Nginx container
   - `package.json`: NPM packages for frontend app
 - `docker-compose.yml`: Orchestrate Docker containers in dev environments.
