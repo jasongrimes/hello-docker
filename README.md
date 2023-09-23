@@ -1,8 +1,8 @@
-# Hello Docker: web, api and db
+# Hello Docker: api, db and web
 
 This is a "hello" web application with three services in Docker containers: an API container (Node and Express), a database container (Postgres), and a web container (Nginx and React).
 
-The web app shows a simple "Hello" message, and indicates whether it comes from React, Express, or the DB, depending on how far things have been successfully wired up.
+The web app displays a simple "Hello" message, and indicates whether it comes from React, Express, or the DB, depending on how far things have been successfully wired up.
 
 ## Running the hello application
 
@@ -23,9 +23,8 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 
 ## Basic architecture
 
-This is a simple "hello" application with a JavaScript frontend, a NodeJS API backend, and a database.
-
-The three basic services are broken into three separate Docker containers:
+This simple "hello" application has a JavaScript frontend, a NodeJS API backend, and a database.
+These three basic services are broken into three separate Docker containers:
 
 - `api`: The REST API, served by Node JS. (Express, in this example.)
 - `db`: A database. (Postgres, in this example.)
