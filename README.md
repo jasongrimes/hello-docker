@@ -1,15 +1,15 @@
 # Hello Docker: web, api and db
 
-A "hello" app with Docker containers for a basic web application, including a web container (Nginx and React), an API container (Node and Express), and a database container (Postgres).
+This is a "hello" app with Docker containers for a basic web application, including a web container (Nginx and React), an API container (Node and Express), and a database container (Postgres).
 
 The web app shows a simple "Hello" message, and indicates whether it comes from React, Express, or the DB, depending on how far things have been successfully wired up.
 
 ## Running the hello application
 
-Run the hello app in a development environment by cloning this repository and using `docker-compose`:
+After cloning this repository, you can run the hello app in a development environment with `docker-compose`:
 
 ```sh
-# In project root directory:
+# In the project root directory:
 docker-compose up --build
 ```
 
@@ -233,12 +233,14 @@ app.get("/api/hello", async (req, res) => {
   // res.json({ message: 'Hello from Express' });
   try {
     const result = await db.query("SELECT $1 as message", ["Hello from DB"]);
-    res.json(result.rows[0]);
+    const { message } = result.rows[0];
+    res.json({ message });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ message: "DB error", error: "Internal Server Error" });
+    res.status(500).json({
+      message: "Hello from Express - DB error",
+      error: "Internal Server Error",
+    });
   }
 });
 
@@ -307,7 +309,7 @@ services:
     command: sh -c "npm install && npx nodemon index.js"
     ports:
       - "4000:4000"
-    
+
   db:
     image: postgres
     volumes:
@@ -338,7 +340,7 @@ services:
     command: sh -c "npm install && npm start"
     ports:
       - "3000:3000"
-    
+
 volumes:
   postgres-data:
 ```
@@ -388,10 +390,10 @@ CMD ["node", "index.js"]
 The `postgres` image supports running custom initialization scripts when the database is first created.
 (This is common in database Docker images.)
 
-Create a `db/initdb.d/` directory, and add one or more *.sql, *.sql.gz, or *.sh files to be run when the database is first created.
+Create a `db/initdb.d/` directory, and add one or more _.sql, _.sql.gz, or \*.sh files to be run when the database is first created.
 Note that postgres only runs the init scripts **if the postgres data directory is empty**.
 
-To cause the init scripts to be run again, remove the `postgres-data` volume (*which deletes all data*):
+To cause the init scripts to be run again, remove the `postgres-data` volume (_which deletes all data_):
 
 ```sh
 # In the db terminal, in the project root directory:
@@ -524,6 +526,43 @@ volumes:
   postgres-data:
 ```
 
-## Deploying to production
+### Build and run custom images in development
 
-See [Basic Docker and ECS]() for examples of deploying these containers to production and testing environments on AWS.
+```sh
+# In project root directory:
+docker-compose up --build
+```
+
+## Build stand-alone Docker images
+
+Docker images should be tagged with the SHA of the current Git commit.
+
+If necessary, create a Git repository with a initial commit in the project root directory.
+
+```sh
+# In the project root directory:
+git init
+git add .
+git commit -m 'Initial commit: Hello app for Docker, web, api, and db (nginx, react, express, postgres).'
+```
+
+Get the current Git commit SHA:
+
+```sh
+# In the project root directory:
+COMMIT_SHA=$(git rev-parse HEAD)
+```
+
+Build the containers:
+
+```sh
+# In the project root directory:
+docker build -t hello-api:$COMMIT_SHA api
+docker build -t hello-web:$COMMIT_SHA web
+```
+
+List the images:
+
+```sh
+docker image ls
+```

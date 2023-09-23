@@ -22,11 +22,12 @@ app.use(cors());
 app.get("/api/hello", async (req, res) => {
   // res.json({ message: 'Hello from Express' });
   try {
-    const result = await db.query('SELECT $1 as message', ['Hello from DB'])
-    res.json(result.rows[0]);
+    const result = await db.query('SELECT $1 as message', ['Hello from DB']);
+    const { message } = result.rows[0];
+    res.json({ message });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "DB error", error: "Internal Server Error" });
+    res.status(500).json({ message: "Hello from Express - DB error", error: "Internal Server Error" });
   }
 });
 
