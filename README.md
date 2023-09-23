@@ -45,7 +45,7 @@ To scale the app later, the database can be moved into separate EC2 instances or
   - `index.js`: Node server for REST API (in Express.js)
   - `package.json`: NPM packages for backend app
 - `db/`: Database configuration
-  - `initdb.d/`: DB config scripts executed when the db container volume is first created
+  - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The web server and JavaScript frontend
   - `nginx/`:
     - `nginx.conf`: Config for Nginx web server and reverse proxy.
