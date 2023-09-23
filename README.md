@@ -1,6 +1,6 @@
 # Hello Docker: web, api and db
 
-A "hello" app with Docker containers for a basic web application, including a web container (Nginx and React), an API container (Node and Express), and a database container (Postgres).
+A "hello" web application with three services in Docker containers: an API container (Node and Express), a database container (Postgres), and a web container (Nginx and React).
 
 The web app shows a simple "Hello" message, and indicates whether it comes from React, Express, or the DB, depending on how far things have been successfully wired up.
 
