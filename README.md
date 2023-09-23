@@ -1,6 +1,6 @@
 # Hello Docker: web, api and db
 
-This is a "hello" app with Docker containers for a basic web application, including a web container (Nginx and React), an API container (Node and Express), and a database container (Postgres).
+This is a "hello" web application with three services in Docker containers: an API container (Node and Express), a database container (Postgres), and a web container (Nginx and React).
 
 The web app shows a simple "Hello" message, and indicates whether it comes from React, Express, or the DB, depending on how far things have been successfully wired up.
 
@@ -45,7 +45,7 @@ To scale the app later, the database can be moved into separate EC2 instances or
   - `index.js`: Node server for REST API (in Express.js)
   - `package.json`: NPM packages for backend app
 - `db/`: Database configuration
-  - `initdb.d/`: DB config scripts executed when the db container volume is first created
+  - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The web server and JavaScript frontend
   - `nginx/`:
     - `nginx.conf`: Config for Nginx web server and reverse proxy.
