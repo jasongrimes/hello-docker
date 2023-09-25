@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-const apiBaseUrl = process.env.API_BASEURL || "http://localhost:4000";
+//const apiBaseUrl = process.env.REACT_APP_API_BASEURL || "http://localhost:4000";
+const apiBaseUrl = window.APP_CONFIG.apiBaseUrl || "http://localhost:4000";
+const hostname = window.APP_CONFIG.serverHostname;
 
 function App() {
-  const [message, setMessage] = useState("Hello from React");
+  const [messages, setMessages] = useState([`Hello from web (${hostname})`]);
 
   // Fetch message from /api/hello
   useEffect(() => {
     fetch(`${apiBaseUrl}/api/hello`)
       .then((response) => response.json())
       .then((data) => {
-        setMessage(data.message);
+        setMessages([...messages, ...data.messages]);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -21,7 +23,12 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>{message}</h1>
+        <h1>Hello docker</h1>
+        <ul>
+          {messages.map((message) => (
+            <li style={{ textAlign: "left" }}>{message}</li>
+          ))}
+        </ul>
       </header>
     </div>
   );
