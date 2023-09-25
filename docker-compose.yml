@@ -1,14 +1,14 @@
 version: "3.8"
 services:
-  api:
+  backend:
     depends_on:
       - db
     #image: node:20
     build:
-      context: "./api"
+      context: "./backend"
       target: "base"
     volumes:
-      - ./api:/app
+      - ./backend:/app
     working_dir: /app
     environment:
       NODE_ENV: development
@@ -35,15 +35,15 @@ services:
       - "5432:5432"
     restart: always
 
-  web:
+  frontend:
     depends_on:
-      - api
+      - backend
     #image: node:20
     build:
-      context: "./web"
+      context: "./frontend"
       target: "base"
     volumes:
-      - ./web:/app
+      - ./frontend:/app
     working_dir: /app
     environment:
       NODE_ENV: development
