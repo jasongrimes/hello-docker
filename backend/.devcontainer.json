@@ -1,0 +1,9 @@
+{
+  "name": "be-api",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "api",
+  "shutdownAction": "none",
+  "extensions": ["dbaeumer.vscode-eslint"],
+  // Open the sub-folder with the source code
+  "workspaceFolder": "./"
+}

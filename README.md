@@ -1,4 +1,4 @@
-# Hello Docker: api, db and web
+# Hello Docker: react, api, and db
 
 This is a "hello" web application with three services in Docker containers: an API container (Node and Express), a database container (Postgres), and a web container (Nginx and React).
 
@@ -26,9 +26,9 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 This simple "hello" application has a JavaScript frontend, a NodeJS API backend, and a database.
 These three basic services are broken into three separate Docker containers:
 
-- `api`: The REST API, served by Node JS. (Express, in this example.)
+- `backend`: The REST API, served by Node JS. (Express, in this example.)
 - `db`: A database. (Postgres, in this example.)
-- `web`: The JavaScript frontend (React, in this example), served by Nginx. Nginx also reverse proxies for the Node JS server in the `api` container over a private network. In production, only the `web` container needs to be publicly accessible on the internet.
+- `frontend`: The JavaScript frontend (React, in this example), served by Node JS in dev and Nginx in prod and test.
 
 In development environments, use `docker-compose` to run all the containers on one development host.
 In production and testing environments,
@@ -53,6 +53,23 @@ To scale the app later, the database can be moved into separate EC2 instances or
   - `Dockerfile`: Docker config for Nginx container
   - `package.json`: NPM packages for frontend app
 - `docker-compose.yml`: Orchestrate Docker containers in dev environments
+
+- `backend/`: The backend REST API
+  - `Dockerfile`: Docker config for Node JS container
+  - `index.js`: Node server for REST API (in Express.js)
+  - `package.json`: NPM packages for backend app
+  - `.devcontainer.json`: VScode docker config for backend container
+- `db/`: Database configuration
+  - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
+- `frontend/`:
+  - `nginx/`:
+    - `nginx.conf`: Config for Nginx web server and reverse proxy, used in production and testing.
+  - `src/`
+    - `App.js`: Basic React component that fetches a hello message from the api server and renders the output
+  - `Dockerfile`: Docker config for Nginx container
+  - `package.json`: NPM packages for frontend app
+  - `.devcontainer.json`: VScode docker config for frontend container
+- `docker-compose.yml`: Docker compose config to orchestrate containers in dev environments
 
 ## Creating a hello app
 
@@ -545,23 +562,26 @@ git add .
 git commit -m 'Initial commit: Hello app for Docker, web, api, and db (nginx, react, express, postgres).'
 ```
 
-Get the current Git commit SHA:
+Get the current Git commit SHA and build the containers:
 
 ```sh
 # In the project root directory:
 COMMIT_SHA=$(git rev-parse HEAD)
-```
-
-Build the containers:
-
-```sh
-# In the project root directory:
-docker build -t hello-api:$COMMIT_SHA api
-docker build -t hello-web:$COMMIT_SHA web
+docker build -t hello-api:$COMMIT_SHA -t hello-api:latest api
+docker build -t hello-web:$COMMIT_SHA -t hello-web:latest web
 ```
 
 List the images:
 
 ```sh
 docker image ls
+```
+
+Running the images:
+
+```sh
+docker network create --driver bridge hello-net
+docker run --rm -d --name=db --network hello-net -e POSTGRES_PASSWORD=postgres postgres
+docker run --rm -d --name=api -p 4002:4000 --network hello-net --init -e DB_HOST=db -e  DB_USER=postgres -e DB_PASSWORD=postgres hello-api
+docker run --rm -d --name=web -p 80:80 -e REACT_APP_API_BASEURL=http://localhost:4002 hello-web
 ```
