@@ -1,4 +1,4 @@
-FROM node:20 as base
+FROM node:20-slim as base
 WORKDIR /app
 
 FROM base as prod
