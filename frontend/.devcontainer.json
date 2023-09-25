@@ -1,9 +1,0 @@
-{
-  "name": "fe-web",
-  "dockerComposeFile": ["../docker-compose.yml"],
-  "service": "web",
-  "shutdownAction": "none",
-  "extensions": ["dbaeumer.vscode-eslint"],
-  // Open the sub-folder with the source code
-  "workspaceFolder": "./"
-}
