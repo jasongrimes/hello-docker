@@ -12,6 +12,3 @@ if [ "$?" -ne "0" ]; then
 else
   echo "Created docker network dev-app-network"
 fi
-
-
-/usr/local/share/docker-init.sh
