@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
-if docker volume create --name my-app &> /dev/null; then
-  echo "Created volume my-app"
+if docker volume create --name dev-app &> /dev/null; then
+  echo "Created volume dev-app"
 else
-  echo "Failed to create volume my-app"
+  echo "Failed to create volume dev-app"
 fi
 
-docker network create my-app-network &> /dev/null
+docker network create dev-app-network &> /dev/null
 if [ "$?" -ne "0" ]; then
-  echo "Network my-app-network already exists"
+  echo "Network dev-app-network already exists"
 else
-  echo "Created docker network my-app-network"
+  echo "Created docker network dev-app-network"
 fi
+
+
+/usr/local/share/docker-init.sh
