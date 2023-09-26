@@ -25,5 +25,5 @@
   // use this only for additional ports not needed by those services (e.g. ssh)
   "forwardPorts": [],
   // Install npm packages to the shared volume before running docker-compose in the container
-  "postCreateCommand": "cd frontend && yarn install && cd ../backend && yarn install"
+  "postCreateCommand": "cd frontend && npm install && cd ../backend && npm install"
 }
