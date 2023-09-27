@@ -169,7 +169,7 @@ Test the React app:
 npm start
 ```
 
-Load https://localhost:3000 and expect to see "Hello from React".
+Load http://localhost:3000 and expect to see "Hello from React".
 
 Press `ctl-C` to stop the server.
 
