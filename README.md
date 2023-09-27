@@ -8,7 +8,7 @@ The web app fetches a record from the database via the API, and renders a stack 
 
 ## Running the hello application in development
 
-After cloning this repository, run the hello app in a development environment with `docker-compose`:
+To run the hello app in a development environment, clone this repository and run  `docker-compose`:
 
 ```sh
 # In the project root directory:
