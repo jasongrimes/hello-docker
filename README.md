@@ -1,8 +1,10 @@
 # Hello Docker: React, Express, and Postgres
 
-This is a "hello" web application with three simple services in Docker containers: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
+A "hello" app to use as a placeholder while setting up Docker containers for a web application. 
 
-The web app fetches a record from the database, and renders a stack of hello messages received from each service along the way.
+The app has three simple services in Docker containers: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
+
+The web app fetches a record from the database via the api, and renders a stack of hello messages received from each service along the way.
 
 ## Running the hello application
 
@@ -15,7 +17,11 @@ docker compose up --build
 
 Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see live changes.
 
-Load the API at http://localhost:4000/api/hello.
+![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
+
+Load the API at http://localhost:4001/api/hello.
+
+![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/08b7950b-a54c-4154-a193-ee9992525159)
 
 Check the browser console and the server output for any errors.
 
