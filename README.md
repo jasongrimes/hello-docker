@@ -17,7 +17,7 @@ docker compose up --build
 
 Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see live changes.
 
-![hello-docker-web](https://github.com/jasongrimes/hello-docker/assets/847646/91bb02cc-6408-4aad-ad8c-bad69f36dfb3)
+![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
 
 Load the API at http://localhost:4000/api/hello.
 
