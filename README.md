@@ -91,7 +91,7 @@ To scale the app later, the database can be moved into separate EC2 instances or
 - `db/`: Database configuration
   - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The JavaScript frontend
-  - `public/`/
+  - `public/`
     - `APP_ENV.js`: Environment variables replaced by the web server at runtime, to make them available for configuring the frontend app.
   - `src/`
     - `App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
