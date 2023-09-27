@@ -8,7 +8,7 @@ The web app fetches a record from the database via the API, and renders a stack 
 
 ## Running the hello application in development
 
-Requires recent [Docker Desktop](https://www.docker.com/products/docker-desktop/) or other workable [installation of Docker Compose](https://docs.docker.com/compose/install/standalone/).
+Requires recent [Docker Compose (one way or another)](https://docs.docker.com/compose/install/). I like Docker Desktop.
 
 To run the hello app in a development environment, clone this repository and run  `docker-compose`:
 
