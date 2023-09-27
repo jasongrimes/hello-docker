@@ -32,8 +32,9 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 ## Building and running for production and test
 
 When building the containers, tag them with the current Git commit SHA.
-# In the project root directory:
+
 ```sh
+# In the project root directory:
 COMMIT_SHA=$(git rev-parse HEAD)
 docker build -t hello-api:$COMMIT_SHA -t hello-api:latest api
 docker build -t hello-web:$COMMIT_SHA -t hello-web:latest web
