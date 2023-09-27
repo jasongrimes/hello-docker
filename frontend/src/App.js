@@ -13,7 +13,7 @@ function App() {
     fetch(`${apiBaseUrl}/api/hello`)
       .then((response) => response.json())
       .then((data) => {
-        setMessages([...messages, ...data.messages]);
+        setMessages([...messages, `Hello from web fetched api (${apiBaseUrl}/api/hello)`, ...data.messages]);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -23,7 +23,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Hello docker</h1>
+        <h1>Hello Docker</h1>
         <ul>
           {messages.map((message) => (
             <li style={{ textAlign: "left" }}>{message}</li>
