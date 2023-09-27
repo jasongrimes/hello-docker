@@ -19,11 +19,11 @@ Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see liv
 
 ![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
 
-Load the API at http://localhost:4001/api/hello.
+Check the browser console and the server output for any errors.
+
+In development, the API can be loaded at http://localhost:4001/api/hello.
 
 ![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/08b7950b-a54c-4154-a193-ee9992525159)
-
-Check the browser console and the server output for any errors.
 
 Press `ctl-C` in the docker-compose terminal to stop the containers.
 
