@@ -6,9 +6,9 @@ The app has three simple services in Docker containers: a web container (Nginx/N
 
 The web app fetches a record from the database via the api, and renders a stack of hello messages received from each service along the way.
 
-## Running the hello application
+## Running the hello application in development
 
-After cloning this repository, you can run the hello app in a development environment with `docker-compose`:
+After cloning this repository, run the hello app in a development environment with `docker-compose`:
 
 ```sh
 # In the project root directory:
@@ -26,6 +26,43 @@ Load the API at http://localhost:4001/api/hello.
 Check the browser console and the server output for any errors.
 
 Press `ctl-C` in the docker-compose terminal to stop the containers.
+
+## Building and running for production and test
+
+When building the containers, tag them with the current Git commit SHA.
+# In the project root directory:
+```sh
+COMMIT_SHA=$(git rev-parse HEAD)
+docker build -t hello-api:$COMMIT_SHA -t hello-api:latest api
+docker build -t hello-web:$COMMIT_SHA -t hello-web:latest web
+```
+
+List the images:
+
+```sh
+docker image ls
+```
+
+Running the images:
+
+```sh
+docker network create --driver bridge hello-net
+docker run --rm -d --name=db \
+  --network hello-net \
+  -e POSTGRES_PASSWORD=postgres \
+  postgres
+docker run --rm -d --name=api \
+  -p 4002:4000 --network hello-net --init \
+  -e DB_HOST=db -e  DB_USER=postgres -e DB_PASSWORD=postgres \
+  hello-api
+docker run --rm -d --name=web \
+  -p 80:80 \
+  -e API_BASEURL=http://localhost:4002 \
+  hello-web
+```
+
+Load the app at http://localhost
+
 
 ## Basic architecture
 
