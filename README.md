@@ -21,7 +21,7 @@ Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see liv
 
 Load the API at http://localhost:4000/api/hello.
 
-![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/2f4f8b1a-0e72-4c98-82aa-710ffaad6380)
+![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/08b7950b-a54c-4154-a193-ee9992525159)
 
 Check the browser console and the server output for any errors.
 
