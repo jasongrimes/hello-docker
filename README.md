@@ -1,8 +1,8 @@
-# Hello Docker: react, api, and db
+# Hello Docker: React, Express, and Postgres
 
-This is a "hello" web application with three services in Docker containers: an API container (Node and Express), a database container (Postgres), and a web container (Nginx and React).
+This is a "hello" web application with three simple services in Docker containers: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
 
-The web app displays a simple "Hello" message, and indicates whether it comes from React, Express, or the DB, depending on how far things have been successfully wired up.
+The web app fetches a record from the database, and renders a stack of hello messages received from each service along the way.
 
 ## Running the hello application
 
@@ -10,12 +10,12 @@ After cloning this repository, you can run the hello app in a development enviro
 
 ```sh
 # In the project root directory:
-docker-compose up --build
+docker compose up --build
 ```
 
-Then load the web app at http://localhost:3000 to see "Hello from DB". Edit `web/src/App.js` to see live changes.
+Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see live changes.
 
-Load the API at http://localhost:4000/api/hello and expect `{"message": "Hello from DB"}`.
+Load the API at http://localhost:4000/api/hello.
 
 Check the browser console and the server output for any errors.
 
@@ -23,12 +23,12 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 
 ## Basic architecture
 
-This simple "hello" application has a JavaScript frontend, a NodeJS API backend, and a database.
+This simple application has a JavaScript frontend, a NodeJS API backend, and a database.
 These three basic services are broken into three separate Docker containers:
 
-- `backend`: The REST API, served by Node JS. (Express, in this example.)
+- `api`: The REST API, served by Node JS. (Express, in this example.)
 - `db`: A database. (Postgres, in this example.)
-- `frontend`: The JavaScript frontend (React, in this example), served by Node JS in dev and Nginx in prod and test.
+- `web`: The JavaScript frontend (React, in this example), served by Node JS in dev and Nginx in prod and test.
 
 In development environments, use `docker-compose` to run all the containers on one development host.
 In production and testing environments,
@@ -40,35 +40,16 @@ To scale the app later, the database can be moved into separate EC2 instances or
 **File organization:**
 
 - `api/`: The backend REST API
-  - `Dockerfile`: Docker config for Node JS container
+  - `Dockerfile`: Docker config for backend Node JS container
   - `index.js`: Node server for REST API (in Express.js)
   - `package.json`: NPM packages for backend app
 - `db/`: Database configuration
   - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
-- `web/`: The web server and JavaScript frontend
-  - `nginx/`:
-    - `nginx.conf`: Config for Nginx web server and reverse proxy.
+- `web/`: The JavaScript frontend
   - `src/`
-    - `App.js`: Basic React component that fetches a hello message from the api server and renders the output
-  - `Dockerfile`: Docker config for Nginx container
+    - `App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
+  - `Dockerfile`: Docker config for frontend Nginx/Node container
   - `package.json`: NPM packages for frontend app
-- `docker-compose.yml`: Orchestrate Docker containers in dev environments
-
-- `backend/`: The backend REST API
-  - `Dockerfile`: Docker config for Node JS container
-  - `index.js`: Node server for REST API (in Express.js)
-  - `package.json`: NPM packages for backend app
-  - `.devcontainer.json`: VScode docker config for backend container
-- `db/`: Database configuration
-  - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
-- `frontend/`:
-  - `nginx/`:
-    - `nginx.conf`: Config for Nginx web server and reverse proxy, used in production and testing.
-  - `src/`
-    - `App.js`: Basic React component that fetches a hello message from the api server and renders the output
-  - `Dockerfile`: Docker config for Nginx container
-  - `package.json`: NPM packages for frontend app
-  - `.devcontainer.json`: VScode docker config for frontend container
 - `docker-compose.yml`: Docker compose config to orchestrate containers in dev environments
 
 ## Creating a hello app
@@ -305,32 +286,53 @@ Create `docker-compose.yml` in the project root directory:
 ```yaml
 version: "3.8"
 services:
-  api:
+
+  web: 
+    #image: node:20
+    build:
+      context: "./web"
+      target: "base"
+    volumes:
+      - ./web:/app
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      API_BASEURL: http://localhost:4001
+    init: true
+    command: sh -c "npm install && npm run config && npm start"
+    ports:
+      - "3000:3000"
     depends_on:
-      - db
-    image: node:20
-    # build:
-    #   context: "./api"
-    #   target: "base"
+      - api
+
+  api:
+    #image: node:20-slim
+    build:
+      context: "./api"
+      target: "base"
     volumes:
       - ./api:/app
     working_dir: /app
     environment:
       NODE_ENV: development
-      PORT: 4000
+      PORT: 4001
       DB_HOST: db
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: hello
-    command: sh -c "npm install && npx nodemon index.js"
+    init: true
+    command: sh -c "npm install && npm start"
     ports:
-      - "4000:4000"
+      - "4001:4001"
+    depends_on:
+      - db
 
   db:
     image: postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data:delegated
-      # - ./db/initdb.d:/docker-entrypoint-initdb.d/
+      - ./db/initdb.d:/docker-entrypoint-initdb.d/
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -338,24 +340,6 @@ services:
     ports:
       - "5432:5432"
     restart: always
-
-  web:
-    depends_on:
-      - api
-    image: node:20
-    # build:
-    #   context: "./web"
-    #   target: "base"
-    volumes:
-      - ./web:/app
-    working_dir: /app
-    environment:
-      NODE_ENV: development
-      API_BASEURL: http://api:4000
-      PORT: 3000
-    command: sh -c "npm install && npm start"
-    ports:
-      - "3000:3000"
 
 volumes:
   postgres-data:

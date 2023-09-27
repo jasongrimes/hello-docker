@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-//const apiBaseUrl = process.env.REACT_APP_API_BASEURL || "http://localhost:4000";
+window.APP_CONFIG = window.APP_CONFIG || {}
 const apiBaseUrl = window.APP_CONFIG.apiBaseUrl || "http://localhost:4000";
 const hostname = window.APP_CONFIG.serverHostname;
 
@@ -13,7 +13,7 @@ function App() {
     fetch(`${apiBaseUrl}/api/hello`)
       .then((response) => response.json())
       .then((data) => {
-        setMessages([...messages, `Hello from web fetched api (${apiBaseUrl}/api/hello)`, ...data.messages]);
+        setMessages([...messages, `...web fetched api (${apiBaseUrl}/api/hello)`, ...data.messages]);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
