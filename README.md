@@ -334,7 +334,18 @@ Test the api server with the database:
 DB_USER=postgres DB_PASSWORD=postgres npm start
 ```
 
-Load http://localhost:4000/api/hello and expect `{"message":"Hello from DB"}`.
+Load http://localhost:4000/api/hello and expect to see `"...api connected to db (undefined)"`, along with a `"DB error"` because the "hello" table hasn't been created yet.
+
+```sh
+{
+  "messages": [
+    "Hello from api (Jasons-MacBook-Pro-2.local)",
+    "...api connected to db (undefined)",
+    "DB error (check server logs)"
+  ],
+  "error": "Internal Server Error"
+}
+```
 
 Test the frontend app with the database:
 
@@ -343,7 +354,7 @@ Test the frontend app with the database:
 npm start
 ```
 
-Load http://localhost:3000 and expect "Hello from DB".
+Load http://localhost:3000 and expect to the see the same database messages from the API.
 
 Press `ctl-C` in all three terminals to shut down the servers.
 
