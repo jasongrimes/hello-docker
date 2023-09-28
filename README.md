@@ -249,7 +249,7 @@ Test the api server.
 npm start
 ```
 
-Load http://localhost:4000/api/hello and expect `{ "messages": ["Hello from api (undefined)"] }`.
+Load http://localhost:4000/api/hello and expect something like `{ "messages": ["Hello from api (undefined)"] }`.
 
 Test the frontend app. Start the web server:
 
