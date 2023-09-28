@@ -17,7 +17,9 @@ Clone this repository and run  docker compose:
 docker compose up --build
 ```
 
-Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see live changes.
+Then load the web app at http://localhost:3000. 
+
+Edit `web/src/App.js` to see live changes.
 
 ![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
 
