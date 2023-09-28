@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-window.APP_CONFIG = window.APP_CONFIG || {}
-const apiBaseUrl = window.APP_CONFIG.apiBaseUrl || "http://localhost:4000";
-const hostname = window.APP_CONFIG.serverHostname;
+window.env = window.env || {}
+const apiBaseUrl = window.env.API_BASEURL || "http://localhost:4000";
 
 function App() {
-  const [messages, setMessages] = useState([`Hello from web (${hostname})`]);
+  const [messages, setMessages] = useState([`Hello from web (${window.env.HOSTNAME})`]);
 
   // Fetch message from /api/hello
   useEffect(() => {

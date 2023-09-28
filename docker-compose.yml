@@ -13,7 +13,7 @@ services:
       PORT: 3000
       API_BASEURL: http://localhost:4001
     init: true
-    command: sh -c "npm install && npm run config && npm start"
+    command: sh -c "npm install && npm run envsubst && npm start"
     ports:
       - "3000:3000"
     depends_on:

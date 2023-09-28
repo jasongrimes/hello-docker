@@ -1,6 +1,6 @@
 # Hello Docker: React, Express, and Postgres
 
-A "hello" app used as a placeholder while setting up Docker containers for a web application. 
+A "hello" app used as a placeholder while setting up Docker containers for a web application.
 
 The app has three simple services in Docker containers: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
 
@@ -30,7 +30,9 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 ## Building and running for production and test
 
 When building the containers, tag them with the current Git commit SHA.
+
 # In the project root directory:
+
 ```sh
 COMMIT_SHA=$(git rev-parse HEAD)
 docker build -t hello-api:$COMMIT_SHA -t hello-api:latest api
@@ -61,8 +63,7 @@ docker run --rm -d --name=web \
   hello-web
 ```
 
-Load the app at http://localhost
-
+Load the production build at http://localhost
 
 ## Basic architecture
 
@@ -92,10 +93,11 @@ To scale the app later, the database can be moved into separate EC2 instances or
   - `src/`
     - `App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
   - `Dockerfile`: Docker config for frontend Nginx/Node container
+  - `env.js.template`: Template for passing runtime environment variables to the JavaScript frontend
   - `package.json`: NPM packages for frontend app
 - `docker-compose.yml`: Docker compose config to orchestrate containers in dev environments
 
-## Creating a hello app
+## Creating the hello app
 
 How this app was created.
 
@@ -129,17 +131,24 @@ Replace `web/src/App.js` with this:
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-const apiBaseUrl = process.env.API_BASEURL || "http://localhost:4000";
+window.env = window.env || {};
+const apiBaseUrl = window.env.API_BASEURL || "http://localhost:4000";
 
 function App() {
-  const [message, setMessage] = useState("Hello from React");
+  const [messages, setMessages] = useState([
+    `Hello from web (${window.env.HOSTNAME})`,
+  ]);
 
   // Fetch message from /api/hello
   useEffect(() => {
     fetch(`${apiBaseUrl}/api/hello`)
       .then((response) => response.json())
       .then((data) => {
-        setMessage(data.message);
+        setMessages([
+          ...messages,
+          `...web fetched api (${apiBaseUrl}/api/hello)`,
+          ...data.messages,
+        ]);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -149,7 +158,12 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>{message}</h1>
+        <h1>Hello Docker</h1>
+        <ul>
+          {messages.map((message) => (
+            <li style={{ textAlign: "left" }}>{message}</li>
+          ))}
+        </ul>
       </header>
     </div>
   );
@@ -329,12 +343,11 @@ Create `docker-compose.yml` in the project root directory:
 ```yaml
 version: "3.8"
 services:
-
-  web: 
-    #image: node:20
-    build:
-      context: "./web"
-      target: "base"
+  web:
+    image: node:20
+    # build:
+    #   context: "./web"
+    #   target: "base"
     volumes:
       - ./web:/app
     working_dir: /app
@@ -343,17 +356,17 @@ services:
       PORT: 3000
       API_BASEURL: http://localhost:4001
     init: true
-    command: sh -c "npm install && npm run config && npm start"
+    command: sh -c "npm install && npm run envsubst && npm start"
     ports:
       - "3000:3000"
     depends_on:
       - api
 
   api:
-    #image: node:20-slim
-    build:
-      context: "./api"
-      target: "base"
+    image: node:20-slim
+    # build:
+    #   context: "./api"
+    #   target: "base"
     volumes:
       - ./api:/app
     working_dir: /app
@@ -398,8 +411,92 @@ To prepare images for production deployment,
 or to add custom operating system packages or other dependencies,
 custom images need to be built.
 
-This is done by adding a custom `Dockerfile` for each image,
-and updating `docker-compose.yml` to describe the build context instead of specifying an official image.
+This is done by adding a custom `Dockerfile` for an image,
+and updating `docker-compose.yml` to describe the `build` context instead of just specifying an official `image`.
+
+### Customize the web image
+
+Since the web frontend is served as static files, best practice recommends the production image serve it with Nginx instead of Node. Additional customization is needed to share environment variables with the runtime JavaScript application, for easy configuration by the container orchestrator.
+
+Create `web/Dockerfile` with the following contents:
+
+```Dockerfile
+# The "base" image contains the dependencies and no application code
+FROM node:20 as base
+
+# Specify any custom OS packages or other dependencies here.
+# These dependencies will be available in development and build environments.
+RUN apt-get update && apt-get install -y \
+  gettext
+
+# The "build" image inherits from "base", and adds application code for production
+# Dev environments do not include this part--they run a separate startup command defined in docker-compose.yml.
+#
+# Stage 1: Build the React application
+FROM base as build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Stage 2: Create a lightweight container to serve the built React app with Nginx
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Create a docker-entrypoint.sh script to regenerate env.js when the container starts.
+# The "envsubstr" tool is included in the official nginx image.
+# (In the node image, it had to be installed separately with the gettext package.)
+RUN echo '#!/bin/sh' > /docker-entrypoint.sh \
+  && echo 'set -e' >> /docker-entrypoint.sh \
+  && echo 'envsubst < /usr/share/nginx/html/env.js.template > /usr/share/nginx/html/env.js' >> /docker-entrypoint.sh \
+  && echo 'exec "$@"' >> /docker-entrypoint.sh \
+  && chmod +x /docker-entrypoint.sh
+
+# Copy Nginx configuration file, if needed
+#COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### Make the web image configurable with environment variables
+
+Docker containers need to be configurable by environment variables,
+but a JavaScript frontend app runs in a client web browser,
+and doesn't have access to environment in the server container.
+To work around this,
+a publicly accessible file called `env.js` is created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
+
+`env.js` is created by defining a `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubstr`.
+
+The production image generates the `env.js` file when the container starts, using `docker-entrypoint.sh`. For the dev image, `envsubstr` needs to be explicitly installed (with the "gettext" package), and npm scripts are customized to run it at build time.
+
+Create `web/public/env.js.template` with the following contents:
+
+```js
+// Publicly visible runtime environment variable config for the JavaScript frontend.
+//
+// DO NOT EDIT env.js. YOUR CHANGES WILL BE OVERWRITTEN.
+// Make changes in env.js.template instead.
+//
+// Generate env.js from env.js.template with "envsubst", like this:
+//   envsubst < env.js.template > env.js
+//
+window.env = {
+  HOSTNAME: "$HOSTNAME",
+  API_BASEURL: "$API_BASEURL",
+};
+```
+
+Add an `npm run config` script for populating the runtime environment variables in the devlopment environment. Add the following to the `scripts` section in `web/package.json`:
+
+```js
+  "scripts": {
+    "envsubst": "envsubst < public/env.js.template > public/env.js",
+    "prebuild": "npm run envsubst",
+    // ...
+```
 
 ### Customize the api image
 
@@ -428,7 +525,7 @@ EXPOSE 4000
 CMD ["node", "index.js"]
 ```
 
-### Customize the db
+### Initialize the database
 
 The `postgres` image supports running custom initialization scripts when the database is first created.
 (This is common in database Docker images.)
@@ -444,79 +541,32 @@ docker compose rm
 docker volume rm hello-docker_postgres-data
 ```
 
-### Customize the web image
-
-Create `web/Dockerfile` with the following contents:
-
-```Dockerfile
-# "base" image contains the dependencies and no application code
-FROM node:20 as base
-
-# Specify any custom OS packages or other dependencies here.
-# These dependencies will be available in all environments.
-#
-# RUN apt-get update && apt-get install ...
-#
-
-
-# "build" image inherits from "base", and adds application code for production
-# Dev environments do not include this part--they run a separate startup command defined in docker-compose.yml.
-#
-# Stage 1: Build the React application
-FROM base as build
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-# Stage 2: Create a lightweight container to serve the built React app with Nginx
-FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Copy Nginx configuration file
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-### Configure Nginx server
-
-Create `web/nginx/nginx.conf`, to configure the Nginx web and proxy server:
-
-```nginx
-server {
-    listen 80;
-    server_name localhost;
-
-    location / {
-        root /usr/share/nginx/html;
-        index index.html;
-    }
-
-    location /api {
-        # Reverse proxy to the Node backend
-        proxy_pass http://backend:4000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Additional Nginx configuration for SSL, security, etc. can go here if needed
-}
-```
-
 ### Update docker-compose.yml to use customized images
 
 ```yaml
 version: "3.8"
 services:
-  api:
-    depends_on:
-      - db
+  web:
     #image: node:20
+    build:
+      context: "./web"
+      target: "base"
+    volumes:
+      - ./web:/app
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      API_BASEURL: http://localhost:4001
+    init: true
+    command: sh -c "npm install && npm run envsubst && npm start"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  api:
+    #image: node:20-slim
     build:
       context: "./api"
       target: "base"
@@ -525,14 +575,17 @@ services:
     working_dir: /app
     environment:
       NODE_ENV: development
-      PORT: 4000
+      PORT: 4001
       DB_HOST: db
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: hello
-    command: sh -c "npm install && npx nodemon index.js"
+    init: true
+    command: sh -c "npm install && npm start"
     ports:
-      - "4000:4000"
+      - "4001:4001"
+    depends_on:
+      - db
 
   db:
     image: postgres
@@ -546,24 +599,6 @@ services:
     ports:
       - "5432:5432"
     restart: always
-
-  web:
-    depends_on:
-      - api
-    #image: node:20
-    build:
-      context: "./web"
-      target: "base"
-    volumes:
-      - ./web:/app
-    working_dir: /app
-    environment:
-      NODE_ENV: development
-      API_BASEURL: http://api:4000
-      PORT: 3000
-    command: sh -c "npm install && npm start"
-    ports:
-      - "3000:3000"
 
 volumes:
   postgres-data:

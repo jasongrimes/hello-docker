@@ -12,8 +12,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "config": "node APP_CONFIG-gen.js > public/APP_CONFIG.js",
-    "prebuild": "npm run config",
+    "envsubst": "envsubst < public/env.js.template > public/env.js",
+    "prebuild": "npm run envsubst",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
