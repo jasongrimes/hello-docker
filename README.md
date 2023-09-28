@@ -495,8 +495,9 @@ CMD ["nginx", "-g", "daemon off;"]
 ### Expose environment variables to web app
 
 Docker containers need to be configurable by environment variables,
-but a JavaScript frontend app runs in a client web browser,
-and doesn't have access to environment in the server container.
+but a JavaScript frontend app runs in a client web browser
+and so doesn't have access to the web container environment at runtime.
+
 To work around this,
 a publicly accessible file called `env.js` can be created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
 
