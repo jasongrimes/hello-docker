@@ -180,7 +180,9 @@ Test the React app:
 npm start
 ```
 
-Load http://localhost:3000 and expect to see "Hello from React".
+Load http://localhost:3000 and expect to see "Hello from web (undefined)".
+The web container hostname is shown as `(undefined)` because `window.env.HOSTNAME` has not yet been initialized from the server environment.
+More on that later.
 
 Press `ctl-C` to stop the server.
 
