@@ -217,14 +217,18 @@ const cors = require("cors");
 
 const port = process.env.PORT || 4000;
 
+// Create Express app
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Route GET:/api/hello
 app.get("/api/hello", async (req, res) => {
-  res.json({ message: "Hello from Express" });
+  const messages = [`Hello from api (${process.env.HOSTNAME})`];
+  res.json({ messages });
 });
 
+// Start the node server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
