@@ -258,7 +258,7 @@ Test the frontend app. Start the web server:
 npm start
 ```
 
-Load https://localhost:3000 and expect "Hello from Express".
+Load http://localhost:3000 and expect "Hello from Express".
 
 Press `ctl-C` in both terminals to stop the servers.
 
@@ -337,7 +337,7 @@ Test the frontend app with the database:
 npm start
 ```
 
-Load https://localhost:3000 and expect "Hello from DB".
+Load http://localhost:3000 and expect "Hello from DB".
 
 Press `ctl-C` in all three terminals to shut down the servers.
 
