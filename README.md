@@ -96,10 +96,11 @@ To scale the app later, the database can be moved into separate EC2 instances or
 ## File organization
 
 - `api/`: The backend REST API
+  - `db.sh`: API database code
   - `Dockerfile`: Docker config for backend Node JS container
   - `index.js`: Node server for REST API (in Express.js)
   - `package.json`: NPM packages for backend app
-- `db/`: Database configuration
+- `db/`: Database container configuration
   - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The JavaScript frontend
   - `public/env.js.template`: Environment variables replaced on the web server at runtime into a new file called `env.js`, to make them available for configuring the frontend app.
@@ -224,6 +225,7 @@ Add `api/index.js` with the following content:
 ```js
 const express = require("express");
 const cors = require("cors");
+const db = require("./db");
 
 const port = process.env.PORT || 4000;
 
@@ -235,6 +237,14 @@ app.use(cors());
 // Route GET:/api/hello
 app.get("/api/hello", async (req, res) => {
   const messages = [`Hello from api (${process.env.HOSTNAME})`];
+  try {
+    const dbMessages = await db.getHelloMessages();
+    messages.push(...dbMessages);
+  } catch (error) {
+    console.error(error);
+    messages.push('DB error (check server logs)')
+    res.status(500).json({ messages, error: "Internal Server Error" });
+  }
   res.json({ messages });
 });
 
