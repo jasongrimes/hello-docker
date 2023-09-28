@@ -96,7 +96,7 @@ To scale the app later, the database can be moved into separate EC2 instances or
 ## File organization
 
 - `api/`: The backend REST API
-  - `db.sh`: API database code
+  - `db.js`: API database code
   - `Dockerfile`: Docker config for backend Node JS container
   - `index.js`: Node server for REST API (in Express.js)
   - `package.json`: NPM packages for backend app
