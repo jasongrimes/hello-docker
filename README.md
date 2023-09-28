@@ -301,9 +301,9 @@ app.get("/api/hello", async (req, res) => {
     let result = await db.query('SELECT $1 AS message', [`...api connected to db (${process.env.DB_HOST})`]);
     messages.push(result.rows[0]['message']);
 
-    result = await db.query('SELECT * FROM hello');
-    const { message } = result.rows[0];
-    messages.push(message);
+    // result = await db.query('SELECT * FROM hello');
+    // const { message } = result.rows[0];
+    // messages.push(message);
 
     res.json({ messages });
 
