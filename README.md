@@ -296,17 +296,21 @@ app.use(cors());
 
 // Route GET:/api/hello
 app.get("/api/hello", async (req, res) => {
-  // res.json({ message: 'Hello from Express' });
+  let messages = [`Hello from api (${process.env.HOSTNAME})`];
   try {
-    const result = await db.query("SELECT $1 as message", ["Hello from DB"]);
+    let result = await db.query('SELECT $1 AS message', [`...api connected to db (${process.env.DB_HOST})`]);
+    messages.push(result.rows[0]['message']);
+
+    result = await db.query('SELECT * FROM hello');
     const { message } = result.rows[0];
-    res.json({ message });
+    messages.push(message);
+
+    res.json({ messages });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      message: "Hello from Express - DB error",
-      error: "Internal Server Error",
-    });
+    messages.push('DB error (check server logs)')
+    res.status(500).json({ messages, error: "Internal Server Error" });
   }
 });
 
