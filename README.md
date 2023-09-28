@@ -281,8 +281,9 @@ const { Pool } = require("pg");
 const port = process.env.PORT || 4000;
 
 // Create Postgres connection
+const dbHost = process.env.DB_HOST || 'localhost';
 const db = new Pool({
-  host: process.env.DB_HOST,
+  host: dbHost,
   port: process.env.DB_PORT,
   database: process.env.DB_DATABASE,
   user: process.env.DB_USER,
@@ -298,7 +299,7 @@ app.use(cors());
 app.get("/api/hello", async (req, res) => {
   const messages = [`Hello from api (${process.env.HOSTNAME})`];
   try {
-    let result = await db.query('SELECT $1 AS message', [`...api connected to db (${process.env.DB_HOST})`]);
+    let result = await db.query('SELECT $1 AS message', [`...api connected to db (${dbHost})`]);
     messages.push(result.rows[0]['message']);
 
     // result = await db.query('SELECT * FROM hello');
