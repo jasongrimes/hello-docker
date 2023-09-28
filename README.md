@@ -249,7 +249,7 @@ Test the api server.
 npm start
 ```
 
-Load http://localhost:4000/api/hello and expect `{ "message": "Hello from Express" }`.
+Load http://localhost:4000/api/hello and expect `{ "messages": ["Hello from api (undefined)"] }`.
 
 Test the frontend app. Start the web server:
 
@@ -258,7 +258,9 @@ Test the frontend app. Start the web server:
 npm start
 ```
 
-Load http://localhost:3000 and expect "Hello from Express".
+Load http://localhost:3000:
+
+![hello-docker-web-2](https://github.com/jasongrimes/hello-docker/assets/847646/e6f95117-c3ef-4c42-b737-981b1aad3993)
 
 Press `ctl-C` in both terminals to stop the servers.
 
