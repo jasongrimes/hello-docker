@@ -492,7 +492,7 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-### Make the web image configurable with environment variables
+### Expose environment variables to web app
 
 Docker containers need to be configurable by environment variables,
 but a JavaScript frontend app runs in a client web browser,
