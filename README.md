@@ -79,14 +79,16 @@ Load the production build at http://localhost.
 ## Basic architecture
 
 Three 
-basic services--web (Nginx/Node and React), API (Node and Express), database (Postgres)--are defined in three Docker container images. The application scales horizontally, supporting multiple 
+basic services--web (Nginx/Node and React), API (Node and Express), and database (Postgres)--are defined in three Docker container images. 
+
+The application scales horizontally, supporting multiple 
 containers for each image, distributed across geography and infrastructure. 
 
-In development environments, use docker compose to run all the containers on one development host.
+In development environments, docker compose can run all the containers on one development host.
 
 In production and testing environments,
 the containers can all run on a single EC2 instance initially,
-possibly behind another container serving as a gateway like HAProxy.
+possibly behind another container like haproxy serving as a gateway.
 Resource monitoring can indicate what needs to scale and when.
 
 To scale the app later, the database can be moved into separate EC2 instances or a managed service; multiple api and web containers can be run on different EC2 instances, in different regions; and Cloudflare can be used for (free) load balancing across web containers with round-robin DNS, along with caching, DDoS protection and other security measures.
