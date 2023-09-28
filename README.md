@@ -2,13 +2,15 @@
 
 A "hello" app used as a placeholder while setting up Docker containers for a web application.
 
-The app has three simple services in Docker containers: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
+The app has three simple containerized services in Docker: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
 
 The web app fetches a record from the database via the API, and renders a stack of hello messages received from each service along the way.
 
 ## Running the hello application in development
 
-After cloning this repository, run the hello app in a development environment with `docker-compose`:
+Requires a recent [installation of Docker Compose (one way or another)](https://docs.docker.com/compose/install/). I like Docker Desktop.
+
+To run the hello app in a development environment, clone this repository and run  `docker-compose`:
 
 ```sh
 # In the project root directory:
@@ -19,11 +21,11 @@ Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see liv
 
 ![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
 
-Load the API at http://localhost:4001/api/hello.
+Check the browser console and the server output for any errors.
+
+In development, the API can be loaded at http://localhost:4001/api/hello.
 
 ![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/08b7950b-a54c-4154-a193-ee9992525159)
-
-Check the browser console and the server output for any errors.
 
 Press `ctl-C` in the docker-compose terminal to stop the containers.
 
@@ -31,9 +33,8 @@ Press `ctl-C` in the docker-compose terminal to stop the containers.
 
 When building the containers, tag them with the current Git commit SHA.
 
-# In the project root directory:
-
 ```sh
+# In the project root directory:
 COMMIT_SHA=$(git rev-parse HEAD)
 docker build -t hello-api:$COMMIT_SHA -t hello-api:latest api
 docker build -t hello-web:$COMMIT_SHA -t hello-web:latest web
@@ -90,6 +91,8 @@ To scale the app later, the database can be moved into separate EC2 instances or
 - `db/`: Database configuration
   - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The JavaScript frontend
+  - `public/`
+    - `APP_ENV.js`: Environment variables replaced by the web server at runtime, to make them available for configuring the frontend app.
   - `src/`
     - `App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
   - `Dockerfile`: Docker config for frontend Nginx/Node container
@@ -179,7 +182,7 @@ Test the React app:
 npm start
 ```
 
-Load https://localhost:3000 and expect to see "Hello from React".
+Load http://localhost:3000 and expect to see "Hello from React".
 
 Press `ctl-C` to stop the server.
 
