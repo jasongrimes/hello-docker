@@ -8,16 +8,18 @@ The web app fetches a record from the database via the API, and renders a stack 
 
 ## Running the hello application in development
 
-Requires a recent [installation of Docker Compose (one way or another)](https://docs.docker.com/compose/install/). I like Docker Desktop.
+Requires [Docker Compose](https://docs.docker.com/compose/install/).
 
-To run the hello app in a development environment, clone this repository and run  `docker-compose`:
+Clone this repository and run  docker compose:
 
 ```sh
 # In the project root directory:
 docker compose up --build
 ```
 
-Then load the web app at http://localhost:3000. Edit `web/src/App.js` to see live changes.
+Then load the web app at http://localhost:3000. 
+
+Edit `web/src/App.js` to see live changes.
 
 ![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
 
@@ -50,39 +52,37 @@ Running the images:
 
 ```sh
 docker network create --driver bridge hello-net
-docker run --rm -d --name=db \
+docker run --rm -d \
+  --name=db \
   --network hello-net \
   -e POSTGRES_PASSWORD=postgres \
   postgres
-docker run --rm -d --name=api \
-  -p 4002:4000 --network hello-net --init \
+docker run --rm -d --init \
+  --name=api \
+  --network hello-net \
+  -p 4002:4000  \
   -e DB_HOST=db -e  DB_USER=postgres -e DB_PASSWORD=postgres \
   hello-api
-docker run --rm -d --name=web \
+docker run --rm -d \
+  --name=web \
   -p 80:80 \
   -e API_BASEURL=http://localhost:4002 \
   hello-web
 ```
 
-Load the production build at http://localhost
+Load the production build at http://localhost.
 
-## Basic architecture
+## Infrastructure
 
-This simple application has a JavaScript frontend, a NodeJS API backend, and a database.
-These three basic services are broken into three separate Docker containers:
+In development environments, use docker compose to run all the containers on one development host.
 
-- `api`: The REST API, served by Node JS. (Express, in this example.)
-- `db`: A database. (Postgres, in this example.)
-- `web`: The JavaScript frontend (React, in this example), served by Node JS in dev and Nginx in prod and test.
-
-In development environments, use `docker-compose` to run all the containers on one development host.
 In production and testing environments,
 the containers can all run on a single EC2 instance initially.
 Resource monitoring can indicate what needs to scale and when.
 
 To scale the app later, the database can be moved into separate EC2 instances or a managed service; multiple api and web containers can be run on different EC2 instances, in different regions; and Cloudflare can be used for (free) load balancing across web containers with round-robin DNS, along with caching, DDoS protection and other security measures.
 
-**File organization:**
+## File organization
 
 - `api/`: The backend REST API
   - `Dockerfile`: Docker config for backend Node JS container
@@ -91,12 +91,9 @@ To scale the app later, the database can be moved into separate EC2 instances or
 - `db/`: Database configuration
   - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The JavaScript frontend
-  - `public/`
-    - `APP_ENV.js`: Environment variables replaced by the web server at runtime, to make them available for configuring the frontend app.
-  - `src/`
-    - `App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
+  - `public/env.js.template`: Environment variables replaced on the web server at runtime into a new file called `env.js`, to make them available for configuring the frontend app.
+  - `src/App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
   - `Dockerfile`: Docker config for frontend Nginx/Node container
-  - `env.js.template`: Template for passing runtime environment variables to the JavaScript frontend
   - `package.json`: NPM packages for frontend app
 - `docker-compose.yml`: Docker compose config to orchestrate containers in dev environments
 
