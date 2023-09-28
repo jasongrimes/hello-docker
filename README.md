@@ -32,7 +32,7 @@ In development, the API can be loaded at http://localhost:4001/api/hello.
 
 Press `ctl-C` in the docker-compose terminal to stop the containers.
 
-## Building and running for production and test
+## Building for production and test
 
 When building the containers, tag them with the current Git commit SHA.
 
@@ -73,7 +73,7 @@ docker run --rm -d \
 
 Load the production build at http://localhost.
 
-## Infrastructure
+## Architecture
 
 In development environments, use docker compose to run all the containers on one development host.
 
@@ -364,7 +364,7 @@ Press `ctl-C` in all three terminals to shut down the servers.
 To simplify orchestration of the different services,
 put them in Docker containers and run them in development with `docker-compose`.
 
-### Configure docker compose
+### Simple stand-alone docker compose
 
 Create `docker-compose.yml` in the project root directory:
 
@@ -429,11 +429,11 @@ volumes:
   postgres-data:
 ```
 
-Start the containers with `docker-compose up`.
+Start the containers with `docker compose up`.
 
-## Customizing the container images
-
-The `docker-compose` file above uses the standard official Docker images for `node` and `postgres`.
+This `docker-compose` file uses standard official Docker images for `node` and `postgres`,
+mounts the application source code inside of them,
+and runs the development servers with `npm`.
 
 To prepare images for production deployment,
 or to add custom operating system packages or other dependencies,
@@ -632,46 +632,10 @@ volumes:
   postgres-data:
 ```
 
-### Build and run custom images in development
+### Build and run the custom images in development
 
 ```sh
 # In project root directory:
-docker-compose up --build
-```
-
-## Build stand-alone Docker images
-
-Docker images should be tagged with the SHA of the current Git commit.
-
-If necessary, create a Git repository with a initial commit in the project root directory.
-
-```sh
-# In the project root directory:
-git init
-git add .
-git commit -m 'Initial commit: Hello app for Docker, web, api, and db (nginx, react, express, postgres).'
-```
-
-Get the current Git commit SHA and build the containers:
-
-```sh
-# In the project root directory:
-COMMIT_SHA=$(git rev-parse HEAD)
-docker build -t hello-api:$COMMIT_SHA -t hello-api:latest api
-docker build -t hello-web:$COMMIT_SHA -t hello-web:latest web
-```
-
-List the images:
-
-```sh
-docker image ls
-```
-
-Running the images:
-
-```sh
-docker network create --driver bridge hello-net
-docker run --rm -d --name=db --network hello-net -e POSTGRES_PASSWORD=postgres postgres
-docker run --rm -d --name=api -p 4002:4000 --network hello-net --init -e DB_HOST=db -e  DB_USER=postgres -e DB_PASSWORD=postgres hello-api
-docker run --rm -d --name=web -p 80:80 -e REACT_APP_API_BASEURL=http://localhost:4002 hello-web
+docker compose build
+docker-compose up
 ```
