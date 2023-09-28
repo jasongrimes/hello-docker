@@ -53,17 +53,20 @@ Running the images:
 
 ```sh
 docker network create --driver bridge hello-net
+
 docker run --rm -d \
   --name=db \
   --network hello-net \
   -e POSTGRES_PASSWORD=postgres \
   postgres
+
 docker run --rm -d --init \
   --name=api \
   --network hello-net \
   -p 4002:4000  \
   -e DB_HOST=db -e  DB_USER=postgres -e DB_PASSWORD=postgres \
   hello-api
+
 docker run --rm -d \
   --name=web \
   -p 80:80 \
@@ -75,7 +78,9 @@ Load the production build at http://localhost.
 
 ## Basic architecture
 
-The app has three simple containerized services in Docker: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
+Three 
+basic services--web (Nginx/Node and React), API (Node and Express), database (Postgres)--are defined in three Docker container images. The application scales horizontally, supporting multiple 
+containers for each image, distributed across geography and infrastructure. 
 
 In development environments, use docker compose to run all the containers on one development host.
 
