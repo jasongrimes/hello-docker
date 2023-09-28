@@ -431,20 +431,21 @@ volumes:
 
 Start the containers with `docker compose up`.
 
-This `docker-compose` file uses standard official Docker images for `node` and `postgres`,
+The `docker-compose.yml` file above uses standard official Docker images for `node` and `postgres`,
 mounts the application source code inside of them,
 and runs the development servers with `npm`.
 
 To prepare images for production deployment,
 or to add custom operating system packages or other dependencies,
 custom images need to be built.
-
 This is done by adding a custom `Dockerfile` for an image,
 and updating `docker-compose.yml` to describe the `build` context instead of just specifying an official `image`.
 
 ### Customize the web image
 
-Since the web frontend is served as static files, best practice recommends the production image serve it with Nginx instead of Node. Additional customization is needed to share environment variables with the runtime JavaScript application, for easy configuration by the container orchestrator.
+Though the node web server is useful during development, best practices recommend the use of Nginx in production instead.
+The web image should additionally be customized to enable passing runtime environment variables to the JavaScript application, 
+for easy configuration of the container.
 
 Create `web/Dockerfile` with the following contents:
 
@@ -494,7 +495,7 @@ Docker containers need to be configurable by environment variables,
 but a JavaScript frontend app runs in a client web browser,
 and doesn't have access to environment in the server container.
 To work around this,
-a publicly accessible file called `env.js` is created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
+a publicly accessible file called `env.js` can be created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
 
 `env.js` is created by defining a `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubstr`.
 
