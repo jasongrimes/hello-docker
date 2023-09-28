@@ -518,13 +518,22 @@ window.env = {
 };
 ```
 
-Add an `npm run config` script for populating the runtime environment variables in the devlopment environment. Add the following to the `scripts` section in `web/package.json`:
+Add an `npm run config` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
 
 ```js
-  "scripts": {
-    "envsubst": "envsubst < public/env.js.template > public/env.js",
-    "prebuild": "npm run envsubst",
-    // ...
+"scripts": {
+  "envsubst": "envsubst < public/env.js.template > public/env.js",
+  "prebuild": "npm run envsubst",
+  // ...
+```
+
+Update `public/index.html` to include the `env.js` script immediately after the `<head>` tag,
+to import the environment variable definitions.
+
+```html
+<head>
+    <!-- Inject runtime environment variables as frontend app config. -->
+    <script type="text/javascript" src="%PUBLIC_URL%/env.js"></script>
 ```
 
 ### Customize the api image
