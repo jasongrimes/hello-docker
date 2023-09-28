@@ -91,10 +91,8 @@ To scale the app later, the database can be moved into separate EC2 instances or
 - `db/`: Database configuration
   - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The JavaScript frontend
-  - `public/`
-    - `env.js.template`: Environment variables replaced on the web server at runtime into a new file called `env.js`, to make them available for configuring the frontend app.
-  - `src/`
-    - `App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
+  - `public/env.js.template`: Environment variables replaced on the web server at runtime into a new file called `env.js`, to make them available for configuring the frontend app.
+  - `src/App.js`: Basic React component that fetches a record from the database and renders hello messages from each service along the way.
   - `Dockerfile`: Docker config for frontend Nginx/Node container
   - `package.json`: NPM packages for frontend app
 - `docker-compose.yml`: Docker compose config to orchestrate containers in dev environments
