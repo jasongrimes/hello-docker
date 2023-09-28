@@ -296,7 +296,7 @@ app.use(cors());
 
 // Route GET:/api/hello
 app.get("/api/hello", async (req, res) => {
-  let messages = [`Hello from api (${process.env.HOSTNAME})`];
+  const messages = [`Hello from api (${process.env.HOSTNAME})`];
   try {
     let result = await db.query('SELECT $1 AS message', [`...api connected to db (${process.env.DB_HOST})`]);
     messages.push(result.rows[0]['message']);
