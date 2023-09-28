@@ -10,11 +10,12 @@ The web app fetches a record from the database via the API, and renders a stack 
 
 Requires [Docker Compose](https://docs.docker.com/compose/install/).
 
-Clone this repository and run  docker compose:
+Clone this repository and run docker compose:
 
 ```sh
 # In the project root directory:
-docker compose up --build
+docker compose build
+docker compose up
 ```
 
 Then load the web app at http://localhost:3000. 
