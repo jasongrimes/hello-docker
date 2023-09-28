@@ -637,5 +637,5 @@ volumes:
 ```sh
 # In project root directory:
 docker compose build
-docker-compose up
+docker compose up
 ```
