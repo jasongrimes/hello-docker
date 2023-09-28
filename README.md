@@ -356,6 +356,8 @@ npm start
 
 Load http://localhost:3000 and expect to the see the same database messages from the API.
 
+![hello-docker-web-3](https://github.com/jasongrimes/hello-docker/assets/847646/cd154dc9-0e29-4831-bf7f-a3b5790a22a8)
+
 Press `ctl-C` in all three terminals to shut down the servers.
 
 ## Containerizing the hello app
