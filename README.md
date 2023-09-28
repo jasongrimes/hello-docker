@@ -73,12 +73,15 @@ docker run --rm -d \
 
 Load the production build at http://localhost.
 
-## Architecture
+## Basic architecture
+
+The app has three simple containerized services in Docker: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
 
 In development environments, use docker compose to run all the containers on one development host.
 
 In production and testing environments,
-the containers can all run on a single EC2 instance initially.
+the containers can all run on a single EC2 instance initially,
+possibly behind another container serving as a gateway like HAProxy.
 Resource monitoring can indicate what needs to scale and when.
 
 To scale the app later, the database can be moved into separate EC2 instances or a managed service; multiple api and web containers can be run on different EC2 instances, in different regions; and Cloudflare can be used for (free) load balancing across web containers with round-robin DNS, along with caching, DDoS protection and other security measures.
