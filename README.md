@@ -2,9 +2,9 @@
 
 A "hello" app used as a placeholder while setting up Docker containers for a web application.
 
-The app has three simple containerized services in Docker: a web container (Nginx/Node and React), an API container (Node and Express), and a database container (Postgres).
+The app is composed of three simple services, in three Docker container images: web (Nginx/Node and React), API (Node and Express), and database (Postgres).
 
-The web app fetches a record from the database via the API, and renders a stack of hello messages received from each service along the way.
+The frontend web app fetches data from the database via the API, and renders a stack of "hello" messages received from each service along the way.
 
 ## Running the hello application in development
 
@@ -32,7 +32,7 @@ In development, the API can be loaded at http://localhost:4001/api/hello.
 
 Press `ctl-C` in the docker-compose terminal to stop the containers.
 
-## Building and running for production and test
+## Building for production and test
 
 When building the containers, tag them with the current Git commit SHA.
 
@@ -53,17 +53,20 @@ Running the images:
 
 ```sh
 docker network create --driver bridge hello-net
+
 docker run --rm -d \
   --name=db \
   --network hello-net \
   -e POSTGRES_PASSWORD=postgres \
   postgres
+
 docker run --rm -d --init \
   --name=api \
   --network hello-net \
   -p 4002:4000  \
   -e DB_HOST=db -e  DB_USER=postgres -e DB_PASSWORD=postgres \
   hello-api
+
 docker run --rm -d \
   --name=web \
   -p 80:80 \
@@ -73,12 +76,19 @@ docker run --rm -d \
 
 Load the production build at http://localhost.
 
-## Infrastructure
+## Basic architecture
 
-In development environments, use docker compose to run all the containers on one development host.
+Three 
+basic services--web (Nginx/Node and React), API (Node and Express), and database (Postgres)--are defined in three Docker container images. 
+
+The application scales horizontally, supporting multiple 
+containers for each image, distributed across geography and infrastructure. 
+
+In development environments, docker compose can run all the containers on one development host.
 
 In production and testing environments,
-the containers can all run on a single EC2 instance initially.
+the containers can all run on a single EC2 instance initially,
+possibly behind another container like haproxy serving as a gateway.
 Resource monitoring can indicate what needs to scale and when.
 
 To scale the app later, the database can be moved into separate EC2 instances or a managed service; multiple api and web containers can be run on different EC2 instances, in different regions; and Cloudflare can be used for (free) load balancing across web containers with round-robin DNS, along with caching, DDoS protection and other security measures.
@@ -86,10 +96,11 @@ To scale the app later, the database can be moved into separate EC2 instances or
 ## File organization
 
 - `api/`: The backend REST API
+  - `db.js`: API database code
   - `Dockerfile`: Docker config for backend Node JS container
   - `index.js`: Node server for REST API (in Express.js)
   - `package.json`: NPM packages for backend app
-- `db/`: Database configuration
+- `db/`: Database container configuration
   - `initdb.d/`: DB config scripts executed when the database is first initialized (i.e. when the data volume is empty)
 - `web/`: The JavaScript frontend
   - `public/env.js.template`: Environment variables replaced on the web server at runtime into a new file called `env.js`, to make them available for configuring the frontend app.
@@ -181,6 +192,9 @@ npm start
 ```
 
 Load http://localhost:3000 and expect to see "Hello from web (undefined)".
+
+![hello-docker-web-1](https://github.com/jasongrimes/hello-docker/assets/847646/725a2e70-1ed3-4bad-9eed-13a7a9f46f03)
+
 The web container hostname is shown as `(undefined)` because `window.env.HOSTNAME` has not yet been initialized from the server environment.
 More on that later.
 
@@ -211,17 +225,30 @@ Add `api/index.js` with the following content:
 ```js
 const express = require("express");
 const cors = require("cors");
+const db = require("./db");
 
 const port = process.env.PORT || 4000;
 
+// Create Express app
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Route GET:/api/hello
 app.get("/api/hello", async (req, res) => {
-  res.json({ message: "Hello from Express" });
+  const messages = [`Hello from api (${process.env.HOSTNAME})`];
+  try {
+    const dbMessages = await db.getHelloMessages();
+    messages.push(...dbMessages);
+  } catch (error) {
+    console.error(error);
+    messages.push('DB error (check server logs)')
+    res.status(500).json({ messages, error: "Internal Server Error" });
+  }
+  res.json({ messages });
 });
 
+// Start the node server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
@@ -242,7 +269,7 @@ Test the api server.
 npm start
 ```
 
-Load http://localhost:4000/api/hello and expect `{ "message": "Hello from Express" }`.
+Load http://localhost:4000/api/hello and expect something like `{ "messages": ["Hello from api (undefined)"] }`.
 
 Test the frontend app. Start the web server:
 
@@ -251,7 +278,9 @@ Test the frontend app. Start the web server:
 npm start
 ```
 
-Load https://localhost:3000 and expect "Hello from Express".
+Load http://localhost:3000:
+
+![hello-docker-web-2](https://github.com/jasongrimes/hello-docker/assets/847646/e6f95117-c3ef-4c42-b737-981b1aad3993)
 
 Press `ctl-C` in both terminals to stop the servers.
 
@@ -272,8 +301,9 @@ const { Pool } = require("pg");
 const port = process.env.PORT || 4000;
 
 // Create Postgres connection
+const dbHost = process.env.DB_HOST || 'localhost';
 const db = new Pool({
-  host: process.env.DB_HOST,
+  host: dbHost,
   port: process.env.DB_PORT,
   database: process.env.DB_DATABASE,
   user: process.env.DB_USER,
@@ -287,17 +317,21 @@ app.use(cors());
 
 // Route GET:/api/hello
 app.get("/api/hello", async (req, res) => {
-  // res.json({ message: 'Hello from Express' });
+  const messages = [`Hello from api (${process.env.HOSTNAME})`];
   try {
-    const result = await db.query("SELECT $1 as message", ["Hello from DB"]);
-    const { message } = result.rows[0];
-    res.json({ message });
+    let result = await db.query('SELECT $1 AS message', [`...api connected to db (${dbHost})`]);
+    messages.push(result.rows[0]['message']);
+
+    // result = await db.query('SELECT * FROM hello');
+    // const { message } = result.rows[0];
+    // messages.push(message);
+
+    res.json({ messages });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      message: "Hello from Express - DB error",
-      error: "Internal Server Error",
-    });
+    messages.push('DB error (check server logs)')
+    res.status(500).json({ messages, error: "Internal Server Error" });
   }
 });
 
@@ -321,7 +355,16 @@ Test the api server with the database:
 DB_USER=postgres DB_PASSWORD=postgres npm start
 ```
 
-Load http://localhost:4000/api/hello and expect `{"message":"Hello from DB"}`.
+Load http://localhost:4000/api/hello and expect to see `"...api connected to db (localhost)"`.
+
+```sh
+{
+  "messages": [
+    "Hello from api (Jasons-MacBook-Pro-2.local)",
+    "...api connected to db (localhost)"
+  ]
+}
+```
 
 Test the frontend app with the database:
 
@@ -330,7 +373,9 @@ Test the frontend app with the database:
 npm start
 ```
 
-Load https://localhost:3000 and expect "Hello from DB".
+Load http://localhost:3000 and expect to the see the same database messages from the API.
+
+![hello-docker-web-3](https://github.com/jasongrimes/hello-docker/assets/847646/3125c8fe-dff9-4d13-8d61-0a99633ceaf8)
 
 Press `ctl-C` in all three terminals to shut down the servers.
 
@@ -339,7 +384,7 @@ Press `ctl-C` in all three terminals to shut down the servers.
 To simplify orchestration of the different services,
 put them in Docker containers and run them in development with `docker-compose`.
 
-### Configure docker compose
+### Simple stand-alone docker compose
 
 Create `docker-compose.yml` in the project root directory:
 
@@ -404,22 +449,23 @@ volumes:
   postgres-data:
 ```
 
-Start the containers with `docker-compose up`.
+Start the containers with `docker compose up`.
 
-## Customizing the container images
-
-The `docker-compose` file above uses the standard official Docker images for `node` and `postgres`.
+The `docker-compose.yml` file above uses standard official Docker images for `node` and `postgres`,
+mounts the application source code inside of them,
+and runs the development servers with `npm`.
 
 To prepare images for production deployment,
 or to add custom operating system packages or other dependencies,
 custom images need to be built.
-
 This is done by adding a custom `Dockerfile` for an image,
 and updating `docker-compose.yml` to describe the `build` context instead of just specifying an official `image`.
 
 ### Customize the web image
 
-Since the web frontend is served as static files, best practice recommends the production image serve it with Nginx instead of Node. Additional customization is needed to share environment variables with the runtime JavaScript application, for easy configuration by the container orchestrator.
+Though the node web server is useful during development, best practices recommend the use of Nginx in production instead.
+The web image should additionally be customized to enable passing runtime environment variables to the JavaScript application, 
+for easy configuration of the container.
 
 Create `web/Dockerfile` with the following contents:
 
@@ -463,17 +509,18 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-### Make the web image configurable with environment variables
+### Expose environment variables to the web app
 
 Docker containers need to be configurable by environment variables,
-but a JavaScript frontend app runs in a client web browser,
-and doesn't have access to environment in the server container.
+but a JavaScript frontend app runs in a client web browser
+and so doesn't have access to the web container environment at runtime.
+
 To work around this,
-a publicly accessible file called `env.js` is created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
+a publicly accessible file called `env.js` can be created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
 
-`env.js` is created by defining a `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubstr`.
+`env.js` is created by defining an `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubstr`.
 
-The production image generates the `env.js` file when the container starts, using `docker-entrypoint.sh`. For the dev image, `envsubstr` needs to be explicitly installed (with the "gettext" package), and npm scripts are customized to run it at build time.
+In the production image, the `env.js` file is generated when the container starts, using `docker-entrypoint.sh`. For the dev image, `envsubstr` needs to be explicitly installed (with the "gettext" package), and npm scripts are customized to run it at build time.
 
 Create `web/public/env.js.template` with the following contents:
 
@@ -492,13 +539,22 @@ window.env = {
 };
 ```
 
-Add an `npm run config` script for populating the runtime environment variables in the devlopment environment. Add the following to the `scripts` section in `web/package.json`:
+Add an `npm run config` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
 
 ```js
-  "scripts": {
-    "envsubst": "envsubst < public/env.js.template > public/env.js",
-    "prebuild": "npm run envsubst",
-    // ...
+"scripts": {
+  "envsubst": "envsubst < public/env.js.template > public/env.js",
+  "prebuild": "npm run envsubst",
+  // ...
+```
+
+Update `public/index.html` to include the `env.js` script immediately after the `<head>` tag,
+to import the environment variable definitions.
+
+```html
+<head>
+    <!-- Inject runtime environment variables as frontend app config. -->
+    <script type="text/javascript" src="%PUBLIC_URL%/env.js"></script>
 ```
 
 ### Customize the api image
@@ -607,46 +663,10 @@ volumes:
   postgres-data:
 ```
 
-### Build and run custom images in development
+### Build and run the custom images in development
 
 ```sh
 # In project root directory:
-docker-compose up --build
-```
-
-## Build stand-alone Docker images
-
-Docker images should be tagged with the SHA of the current Git commit.
-
-If necessary, create a Git repository with a initial commit in the project root directory.
-
-```sh
-# In the project root directory:
-git init
-git add .
-git commit -m 'Initial commit: Hello app for Docker, web, api, and db (nginx, react, express, postgres).'
-```
-
-Get the current Git commit SHA and build the containers:
-
-```sh
-# In the project root directory:
-COMMIT_SHA=$(git rev-parse HEAD)
-docker build -t hello-api:$COMMIT_SHA -t hello-api:latest api
-docker build -t hello-web:$COMMIT_SHA -t hello-web:latest web
-```
-
-List the images:
-
-```sh
-docker image ls
-```
-
-Running the images:
-
-```sh
-docker network create --driver bridge hello-net
-docker run --rm -d --name=db --network hello-net -e POSTGRES_PASSWORD=postgres postgres
-docker run --rm -d --name=api -p 4002:4000 --network hello-net --init -e DB_HOST=db -e  DB_USER=postgres -e DB_PASSWORD=postgres hello-api
-docker run --rm -d --name=web -p 80:80 -e REACT_APP_API_BASEURL=http://localhost:4002 hello-web
+docker compose build
+docker compose up
 ```
