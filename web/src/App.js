@@ -12,7 +12,7 @@ function App() {
     fetch(`${apiBaseUrl}/api/hello`)
       .then((response) => response.json())
       .then((data) => {
-        setMessages([...messages, `...web fetched api (${apiBaseUrl}/api/hello)`, ...data.messages]);
+        setMessages([...messages, `Fetched api (${apiBaseUrl}/api/hello) from web (${window.env.HOSTNAME})`, ...data.messages]);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
