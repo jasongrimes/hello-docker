@@ -1,17 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
+const db = require("./db");
 
 const port = process.env.PORT || 4000;
-
-// Create Postgres connection
-const db = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_DATABASE,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-});
 
 // Create Express app
 const app = express();
@@ -22,18 +13,13 @@ app.use(cors());
 app.get("/api/hello", async (req, res) => {
   const messages = [`Hello from api (${process.env.HOSTNAME})`];
   try {
-    let result = await db.query('SELECT $1 AS message', [`...api connected to db (${process.env.DB_HOST})`]);
-    messages.push(result.rows[0]['message']);
-
-    result = await db.query('SELECT * FROM hello');
-    const { message } = result.rows[0];
-    messages.push(message);
-
+    const dbMessages = await db.getHelloMessages();
+    messages.push(...dbMessages);
     res.json({ messages });
 
   } catch (error) {
     console.error(error);
-    messages.push('DB error (check server logs)')
+    messages.push(`DB error, check server logs from api (${process.env.HOSTNAME})`)
     res.status(500).json({ messages, error: "Internal Server Error" });
   }
 });
