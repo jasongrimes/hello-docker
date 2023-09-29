@@ -539,7 +539,7 @@ window.env = {
 };
 ```
 
-Add an `npm run config` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
+Add an `npm run envsubst` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
 
 ```js
 "scripts": {
