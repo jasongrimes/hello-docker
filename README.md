@@ -18,7 +18,7 @@ docker compose build
 docker compose up
 ```
 
-Then load the web app at http://localhost:3000. 
+Load the web app at http://localhost:3000. 
 
 Edit `web/src/App.js` to see live changes.
 
