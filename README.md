@@ -28,7 +28,7 @@ Check the browser console and the server output for any errors.
 
 In development, the API can be loaded at http://localhost:4001/api/hello.
 
-![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/08b7950b-a54c-4154-a193-ee9992525159)
+![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/47a30cac-b0af-40ff-9d4c-f78cd12f6dbb)
 
 Press `ctl-C` in the docker-compose terminal to stop the containers.
 
