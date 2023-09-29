@@ -460,7 +460,7 @@ custom images need to be built.
 This is done by adding a custom `Dockerfile` for an image,
 and updating `docker-compose.yml` to describe the `build` context instead of just specifying an official `image`.
 
-### Expose environment variables to the web app
+### Exposing environment variables to the web app
 
 Docker containers need to be configurable by environment variables,
 but a JavaScript frontend app runs in a client web browser
