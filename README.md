@@ -8,9 +8,9 @@ The frontend web app fetches data from the database via the API, and renders a s
 
 ## Running the hello application in development
 
-Requires [Docker Compose](https://docs.docker.com/compose/install/).
+[Docker Compose](https://docs.docker.com/compose/install/) is required.
 
-Clone this repository and run docker compose:
+Clone the repository, build the images, and run the containers with docker compose:
 
 ```sh
 # In the project root directory:
