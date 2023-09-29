@@ -2,7 +2,7 @@
 
 A "hello" app used as a placeholder while setting up Docker containers for a web application.
 
-The app is composed of three simple services, in three Docker container images: web (Nginx/Node and React), API (Node and Express), and database (Postgres).
+The app is composed of three simple services, in three Docker container images: `web` (Nginx/Node and React), `api` (Node and Express), and `database` (Postgres).
 
 The frontend web app fetches data from the database via the API, and renders a stack of "hello" messages received from each service along the way.
 
