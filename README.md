@@ -22,7 +22,7 @@ Then load the web app at http://localhost:3000.
 
 Edit `web/src/App.js` to see live changes.
 
-![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
+![hello-docker](https://github.com/jasongrimes/hello-docker/assets/847646/4caca9a2-9145-4762-883b-3f165af6e426)
 
 Check the browser console and the server output for any errors.
 
