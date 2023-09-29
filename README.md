@@ -79,15 +79,14 @@ Load the production build at http://localhost.
 ## Basic architecture
 
 Three 
-basic services--web (Nginx/Node and React), API (Node and Express), and database (Postgres)--are defined in three Docker container images. 
+basic application services--`web` (Nginx/Node and React), `api` (Node and Express), and `database` (Postgres)--are defined in three Docker container images. 
 
-The application scales horizontally, supporting multiple 
-containers for each image, distributed across geography and infrastructure. 
+The services scale horizontally, to accommodate cloud infrastructure models. Multiple copies of each service can run in parallel, in distributed locations across geography and infrastructure. 
 
-In development environments, docker compose can run all the containers on one development host.
+In development environments, docker compose runs all the containers on one development host.
 
 In production and testing environments,
-the containers can all run on a single EC2 instance initially,
+the containers can all run on a single host instance initially (ex. a single EC2 container),
 possibly behind another container like haproxy serving as a gateway.
 Resource monitoring can indicate what needs to scale and when.
 
