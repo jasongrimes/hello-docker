@@ -460,6 +460,54 @@ custom images need to be built.
 This is done by adding a custom `Dockerfile` for an image,
 and updating `docker-compose.yml` to describe the `build` context instead of just specifying an official `image`.
 
+### Expose environment variables to the web app
+
+Docker containers need to be configurable by environment variables,
+but a JavaScript frontend app runs in a client web browser
+and so doesn't have access to the web container environment at runtime.
+
+To work around this,
+a publicly accessible file called `env.js` can be created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
+
+`env.js` is created by defining an `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubst`.
+
+In the production image, the `env.js` file is generated when the container starts, using `docker-entrypoint.sh`. For the dev image, `envsubst` needs to be explicitly installed (with the "gettext" package), and npm scripts are customized to run it at build time.
+
+Create `web/public/env.js.template` with the following contents:
+
+```js
+// Publicly visible runtime environment variable config for the JavaScript frontend.
+//
+// DO NOT EDIT env.js. YOUR CHANGES WILL BE OVERWRITTEN.
+// Make changes in env.js.template instead.
+//
+// Generate env.js from env.js.template with "envsubst", like this:
+//   envsubst < env.js.template > env.js
+//
+window.env = {
+  HOSTNAME: "$HOSTNAME",
+  API_BASEURL: "$API_BASEURL",
+};
+```
+
+Add an `npm run envsubst` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
+
+```js
+"scripts": {
+  "envsubst": "envsubst < public/env.js.template > public/env.js",
+  "prebuild": "npm run envsubst",
+  // ...
+```
+
+Update `public/index.html` to include the `env.js` script immediately after the `<head>` tag,
+to import the environment variable definitions.
+
+```html
+<head>
+    <!-- Inject runtime environment variables as frontend app config. -->
+    <script type="text/javascript" src="%PUBLIC_URL%/env.js"></script>
+```
+
 ### Customize the web image
 
 Though the node web server is useful during development, best practices recommend the use of Nginx in production instead.
@@ -508,53 +556,6 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-### Expose environment variables to the web app
-
-Docker containers need to be configurable by environment variables,
-but a JavaScript frontend app runs in a client web browser
-and so doesn't have access to the web container environment at runtime.
-
-To work around this,
-a publicly accessible file called `env.js` can be created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
-
-`env.js` is created by defining an `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubst`.
-
-In the production image, the `env.js` file is generated when the container starts, using `docker-entrypoint.sh`. For the dev image, `envsubst` needs to be explicitly installed (with the "gettext" package), and npm scripts are customized to run it at build time.
-
-Create `web/public/env.js.template` with the following contents:
-
-```js
-// Publicly visible runtime environment variable config for the JavaScript frontend.
-//
-// DO NOT EDIT env.js. YOUR CHANGES WILL BE OVERWRITTEN.
-// Make changes in env.js.template instead.
-//
-// Generate env.js from env.js.template with "envsubst", like this:
-//   envsubst < env.js.template > env.js
-//
-window.env = {
-  HOSTNAME: "$HOSTNAME",
-  API_BASEURL: "$API_BASEURL",
-};
-```
-
-Add an `npm run envsubst` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
-
-```js
-"scripts": {
-  "envsubst": "envsubst < public/env.js.template > public/env.js",
-  "prebuild": "npm run envsubst",
-  // ...
-```
-
-Update `public/index.html` to include the `env.js` script immediately after the `<head>` tag,
-to import the environment variable definitions.
-
-```html
-<head>
-    <!-- Inject runtime environment variables as frontend app config. -->
-    <script type="text/javascript" src="%PUBLIC_URL%/env.js"></script>
-```
 
 ### Customize the api image
 
