@@ -10,7 +10,7 @@ The frontend web app fetches data from the database via the API, and renders a s
 
 [Docker Compose](https://docs.docker.com/compose/install/) is required.
 
-Clone the repository, build the images, and run the containers with docker compose:
+Clone the repository, then build the images and run the containers with docker compose:
 
 ```sh
 # In the project root directory:
