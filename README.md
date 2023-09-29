@@ -6,7 +6,7 @@ The app is composed of three simple services, in three Docker container images: 
 
 The frontend web app fetches data from the database via the API, and renders a stack of "hello" messages received from each service along the way.
 
-## Running the hello application in development
+## Running the hello app in development
 
 [Docker Compose](https://docs.docker.com/compose/install/) is required.
 
