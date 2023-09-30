@@ -2,15 +2,15 @@
 
 A "hello" app used as a placeholder while setting up Docker containers for a web application.
 
-The app is composed of three simple services, in three Docker container images: web (Nginx/Node and React), API (Node and Express), and database (Postgres).
+The app is composed of three simple services, in three Docker container images: `web` (Nginx/Node and React), `api` (Node and Express), and `database` (Postgres).
 
 The frontend web app fetches data from the database via the API, and renders a stack of "hello" messages received from each service along the way.
 
-## Running the hello application in development
+## Running the hello app in development
 
-Requires [Docker Compose](https://docs.docker.com/compose/install/).
+[Docker Compose](https://docs.docker.com/compose/install/) is required.
 
-Clone this repository and run docker compose:
+Clone the repository, then build the images and run the containers with docker compose:
 
 ```sh
 # In the project root directory:
@@ -18,17 +18,17 @@ docker compose build
 docker compose up
 ```
 
-Then load the web app at http://localhost:3000. 
+Load the web app at http://localhost:3000. 
 
 Edit `web/src/App.js` to see live changes.
 
-![hello-docker-web1](https://github.com/jasongrimes/hello-docker/assets/847646/c0b295a1-ccaa-4fdc-9929-2571ce6d43fd)
+![hello-docker](https://github.com/jasongrimes/hello-docker/assets/847646/4caca9a2-9145-4762-883b-3f165af6e426)
 
 Check the browser console and the server output for any errors.
 
 In development, the API can be loaded at http://localhost:4001/api/hello.
 
-![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/08b7950b-a54c-4154-a193-ee9992525159)
+![hello-docker-api](https://github.com/jasongrimes/hello-docker/assets/847646/47a30cac-b0af-40ff-9d4c-f78cd12f6dbb)
 
 Press `ctl-C` in the docker-compose terminal to stop the containers.
 
@@ -79,15 +79,14 @@ Load the production build at http://localhost.
 ## Basic architecture
 
 Three 
-basic services--web (Nginx/Node and React), API (Node and Express), and database (Postgres)--are defined in three Docker container images. 
+basic application services--`web` (Nginx/Node and React), `api` (Node and Express), and `database` (Postgres)--are defined in three Docker container images. 
 
-The application scales horizontally, supporting multiple 
-containers for each image, distributed across geography and infrastructure. 
+The services scale horizontally, to accommodate cloud infrastructure models. Multiple copies of each service can run in parallel, in distributed locations across geography and infrastructure. 
 
-In development environments, docker compose can run all the containers on one development host.
+In development environments, docker compose runs all the containers on one development host.
 
 In production and testing environments,
-the containers can all run on a single EC2 instance initially,
+the containers can all run on a single host instance initially (ex. a single EC2 container),
 possibly behind another container like haproxy serving as a gateway.
 Resource monitoring can indicate what needs to scale and when.
 
@@ -461,6 +460,54 @@ custom images need to be built.
 This is done by adding a custom `Dockerfile` for an image,
 and updating `docker-compose.yml` to describe the `build` context instead of just specifying an official `image`.
 
+### Exposing environment variables to the web app
+
+Docker containers need to be configurable by environment variables,
+but a JavaScript frontend app runs in a client web browser
+and so doesn't have access to the web container environment at runtime.
+
+To work around this,
+a publicly accessible file called `env.js` can be created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
+
+`env.js` is created by defining an `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubst`.
+
+In the production image, the `env.js` file is generated when the container starts, using `docker-entrypoint.sh`. For the dev image, `envsubst` needs to be explicitly installed (with the "gettext" package), and npm scripts are customized to run it at build time.
+
+Create `web/public/env.js.template` with the following contents:
+
+```js
+// Publicly visible runtime environment variable config for the JavaScript frontend.
+//
+// DO NOT EDIT env.js. YOUR CHANGES WILL BE OVERWRITTEN.
+// Make changes in env.js.template instead.
+//
+// Generate env.js from env.js.template with "envsubst", like this:
+//   envsubst < env.js.template > env.js
+//
+window.env = {
+  HOSTNAME: "$HOSTNAME",
+  API_BASEURL: "$API_BASEURL",
+};
+```
+
+Add an `npm run envsubst` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
+
+```js
+"scripts": {
+  "envsubst": "envsubst < public/env.js.template > public/env.js",
+  "prebuild": "npm run envsubst",
+  // ...
+```
+
+Update `public/index.html` to include the `env.js` script immediately after the `<head>` tag,
+to import the environment variable definitions.
+
+```html
+<head>
+    <!-- Inject runtime environment variables as frontend app config. -->
+    <script type="text/javascript" src="%PUBLIC_URL%/env.js"></script>
+```
+
 ### Customize the web image
 
 Though the node web server is useful during development, best practices recommend the use of Nginx in production instead.
@@ -509,53 +556,6 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-### Expose environment variables to the web app
-
-Docker containers need to be configurable by environment variables,
-but a JavaScript frontend app runs in a client web browser
-and so doesn't have access to the web container environment at runtime.
-
-To work around this,
-a publicly accessible file called `env.js` can be created that defines the needed environment variables as global JavaScript variables on the `window.env` object.
-
-`env.js` is created by defining an `env.js.template` file with environment variable placeholders, which are replaced using the system tool `envsubstr`.
-
-In the production image, the `env.js` file is generated when the container starts, using `docker-entrypoint.sh`. For the dev image, `envsubstr` needs to be explicitly installed (with the "gettext" package), and npm scripts are customized to run it at build time.
-
-Create `web/public/env.js.template` with the following contents:
-
-```js
-// Publicly visible runtime environment variable config for the JavaScript frontend.
-//
-// DO NOT EDIT env.js. YOUR CHANGES WILL BE OVERWRITTEN.
-// Make changes in env.js.template instead.
-//
-// Generate env.js from env.js.template with "envsubst", like this:
-//   envsubst < env.js.template > env.js
-//
-window.env = {
-  HOSTNAME: "$HOSTNAME",
-  API_BASEURL: "$API_BASEURL",
-};
-```
-
-Add an `npm run envsubst` script for populating the runtime environment variables in the devlopment environment, and make it run as a pre-build hook. Add the following to the `scripts` section in `web/package.json`:
-
-```js
-"scripts": {
-  "envsubst": "envsubst < public/env.js.template > public/env.js",
-  "prebuild": "npm run envsubst",
-  // ...
-```
-
-Update `public/index.html` to include the `env.js` script immediately after the `<head>` tag,
-to import the environment variable definitions.
-
-```html
-<head>
-    <!-- Inject runtime environment variables as frontend app config. -->
-    <script type="text/javascript" src="%PUBLIC_URL%/env.js"></script>
-```
 
 ### Customize the api image
 
