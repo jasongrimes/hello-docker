@@ -7,6 +7,7 @@ services:
       target: "base"
     volumes:
       - ./web:/app
+      - ./web/docker-entrypoint.sh:/docker-entrypoint.sh
     working_dir: /app
     environment:
       NODE_ENV: development
@@ -34,6 +35,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_DATABASE: hello
+      # DB_PORT: 5432
     init: true
     command: sh -c "npm install && npm start"
     ports:
