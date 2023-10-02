@@ -142,24 +142,19 @@ Replace `web/src/App.js` with this:
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-window.env = window.env || {};
+window.env = window.env || {}
 const apiBaseUrl = window.env.API_BASEURL || "http://localhost:4000";
+const hostName = window.env.HOSTNAME || 'unknown-host';
 
 function App() {
-  const [messages, setMessages] = useState([
-    `Hello from web (${window.env.HOSTNAME})`,
-  ]);
+  const [messages, setMessages] = useState([`Hello from web (${hostName})`]);
 
   // Fetch message from /api/hello
   useEffect(() => {
     fetch(`${apiBaseUrl}/api/hello`)
       .then((response) => response.json())
       .then((data) => {
-        setMessages([
-          ...messages,
-          `...web fetched api (${apiBaseUrl}/api/hello)`,
-          ...data.messages,
-        ]);
+        setMessages([...messages, `Fetched api (${apiBaseUrl}/api/hello) from web (${hostName})`, ...data.messages]);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -190,12 +185,12 @@ Test the React app:
 npm start
 ```
 
-Load http://localhost:3000 and expect to see "Hello from web (undefined)".
+Load http://localhost:3000 and expect to see "Hello from web (unknown-host)".
 
 ![hello-docker-web-1](https://github.com/jasongrimes/hello-docker/assets/847646/725a2e70-1ed3-4bad-9eed-13a7a9f46f03)
 
-The web container hostname is shown as `(undefined)` because `window.env.HOSTNAME` has not yet been initialized from the server environment.
-More on that later.
+The web container hostname is shown as `(unknown-host)` because `window.env.HOSTNAME` has not yet been initialized from the server environment.
+More on that below.
 
 Press `ctl-C` to stop the server.
 
@@ -239,18 +234,31 @@ app.get("/api/hello", async (req, res) => {
   try {
     const dbMessages = await db.getHelloMessages();
     messages.push(...dbMessages);
+    res.json({ messages });
+
   } catch (error) {
     console.error(error);
-    messages.push('DB error (check server logs)')
+    messages.push(`DB error, check server logs from api (${process.env.HOSTNAME})`)
     res.status(500).json({ messages, error: "Internal Server Error" });
   }
-  res.json({ messages });
 });
 
 // Start the node server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+```
+
+Create a placeholder db script at `api/db.js`:
+
+```js
+const getHelloMessages = async () => {
+  throw new Error('Database not yet implemented.');
+};
+
+module.exports = {
+  getHelloMessages,
+};
 ```
 
 Configure an `npm start` command in `api/package.json`:

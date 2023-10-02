@@ -11,9 +11,9 @@ const db = new Pool({
 
 const getHelloMessages = async () => {
   const messages = [];
-  messages.push(`Connecting to DB (${process.env.DB_HOST}) from api (${process.env.HOSTNAME})`);
+  messages.push(`Connecting to db (${process.env.DB_HOST}) from api (${process.env.HOSTNAME})`);
 
-  let result = await db.query('SELECT $1 AS message', ["Connected to DB"]);
+  let result = await db.query('SELECT $1 AS message', ["Hello from db.query"]);
   messages.push(result.rows[0]['message'] + ` from api (${process.env.HOSTNAME})`);
 
   result = await db.query('SELECT * FROM hello');
