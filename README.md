@@ -186,9 +186,8 @@ npm start
 ```
 
 Load http://localhost:3000 and expect to see "Hello from web (unknown-host)".
-![hello-docker-web 1](https://github.com/jasongrimes/hello-docker/assets/847646/3c2e16d7-109e-489d-9719-cf9b7906a631)
 
-![hello-docker-web-1](https://github.com/jasongrimes/hello-docker/assets/847646/725a2e70-1ed3-4bad-9eed-13a7a9f46f03)
+![hello-docker-web 1](https://github.com/jasongrimes/hello-docker/assets/847646/582cf9b4-161e-4e49-a9da-921aaf2c75c4)
 
 The web container hostname is shown as `(unknown-host)` because `window.env.HOSTNAME` has not yet been initialized from the server environment.
 More on that below.
