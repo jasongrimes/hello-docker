@@ -86,7 +86,7 @@ The services scale horizontally, to accommodate cloud infrastructure models. Mul
 In development environments, docker compose runs all the containers on one development host.
 
 In production and testing environments,
-the containers can all run on a single host instance initially (ex. a single EC2 container),
+the containers can all run on a single host instance initially (ex. a single EC2 instance),
 possibly behind another container like haproxy serving as a gateway.
 Resource monitoring can indicate what needs to scale and when.
 
